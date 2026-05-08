@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=1920, user-scalable=no">
+    <title>AniWebOs</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Fullscreen dynamic background -->
+    <div id="hero-bg"></div>
+    <div class="overlay-gradient"></div>
+
+    <div id="app" class="view-active">
+        <header>
+            <div class="logo">AnimeWB</div>
+            <div class="header-right">
+                <div id="btn-search" class="search-trigger focusable">
+                    <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
+                        <path
+                            d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                    </svg>
+                </div>
+                <span id="clock">12:00</span>
+                <img src="icon.png" class="user-avatar" alt="User">
+            </div>
+        </header>
+
+        <main>
+            <div class="hero-info">
+                <h1 id="hero-title">Cargando...</h1>
+                <p id="hero-subtitle">Último Episodio</p>
+                <!-- Botones eliminados, ahora salen en el modal de acción -->
+            </div>
+
+            <div class="carousel-container" id="latest-carousel-container">
+                <h2 class="section-title">Últimos Episodios</h2>
+                <div class="carousel-wrapper">
+                    <div id="carousel" class="carousel"></div>
+                </div>
+            </div>
+
+            <div class="carousel-container" id="fav-carousel-container">
+                <h2 class="section-title">Mis Favoritos</h2>
+                <div class="carousel-wrapper">
+                    <div id="carousel-fav" class="carousel"></div>
+                </div>
+            </div>
+        </main>
+
+        <div id="status">Obteniendo datos de AnimeFLV...</div>
+    </div>
+
+    <!-- Modals and Overlays -->
+
+    <!-- Action Modal: Reproducir o Mas Episodios -->
+    <div id="action-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h2>Opciones</h2>
+            <div class="modal-buttons">
+                <button id="btn-action-play" class="modal-btn action-focusable">Reproducir Episodio</button>
+                <button id="btn-action-details" class="modal-btn action-focusable">Más Episodios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anime Details View -->
+    <div id="details-view" class="view-overlay hidden">
+        <div class="details-content">
+            <div class="details-left">
+                <div class="cover-wrapper">
+                    <img id="details-cover" src="" alt="Cover">
+                    <button id="btn-detail-fav" class="fav-heart-btn detail-focusable">
+                        &#10084;
+                    </button>
+                </div>
+            </div>
+            <div class="details-right">
+                <h1 id="details-title">Título del Anime</h1>
+                <p id="details-synopsis">Sinopsis...</p>
+
+                <h2>Lista de Episodios</h2>
+                <div id="details-episodes" class="episodes-list">
+                    <!-- Episodes injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Selection Modal -->
+    <div id="server-modal" class="modal-overlay hidden">
+        <div class="modal-box server-box">
+            <h2>Seleccionar Servidor</h2>
+            <div id="server-buttons" class="server-buttons-container">
+                <!-- Server buttons injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Overlay -->
+    <div id="search-view" class="view-overlay hidden">
+        <div class="search-container">
+            <div class="search-header">
+                <input type="text" id="search-input" placeholder="Escribe el nombre del anime..." autocomplete="off">
+                <p class="search-hint">Presiona ENTER para buscar, ATRÁS para salir</p>
+            </div>
+            <div id="search-results" class="search-results-grid">
+                <!-- Results injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Player Overlay -->
+    <div id="player-overlay" class="hidden">
+        <div class="player-header">
+            <span id="player-title">Reproduciendo...</span>
+            <span class="player-close">Presiona ATRÁS (o ESC) para cerrar</span>
+        </div>
+        <iframe id="video-frame" src="" frameborder="0" allowfullscreen allow="autoplay"></iframe>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
