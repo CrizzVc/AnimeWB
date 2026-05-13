@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as api from './api';
 import './index.css';
 
@@ -8,13 +8,18 @@ const STATES = {
     DETAILS: 'DETAILS',
     SERVER_MODAL: 'SERVER_MODAL',
     PLAYER: 'PLAYER',
-    SEARCH: 'SEARCH'
+    SEARCH: 'SEARCH',
+    EXTENSIONS_MODAL: 'EXTENSIONS_MODAL'
 };
 
+const EXTENSIONS = [
+    { id: 'animeflv', name: 'AnimeFLV', icon: 'AF', color: '#ff8a00' },
+    { id: 'monoschinos', name: 'MonoChinos', icon: 'MC', color: '#00e5ff' },
+    { id: 'tioanime', name: 'TioAnime', icon: 'TA', color: '#ff00e5' }
+];
+
 const DEFAULT_PROFILES = [
-    { id: 1, name: 'User 1', avatar: 'https://ui-avatars.com/api/?name=U1&background=00E5FF&color=fff', favorites: [] },
-    { id: 2, name: 'User 2', avatar: 'https://ui-avatars.com/api/?name=U2&background=FF00E5&color=fff', favorites: [] },
-    { id: 3, name: 'Kids', avatar: 'https://ui-avatars.com/api/?name=K&background=E5FF00&color=000', favorites: [] }
+    { id: 1, name: 'User 1', avatar: 'https://ui-avatars.com/api/?name=U1&background=00E5FF&color=fff', background: '', favorites: [] }
 ];
 
 function App() {
@@ -23,6 +28,8 @@ function App() {
         return saved ? JSON.parse(saved) : DEFAULT_PROFILES;
     });
     const [activeProfile, setActiveProfile] = useState(null);
+    const [editingProfile, setEditingProfile] = useState(null);
+    const [isCreatingProfile, setIsCreatingProfile] = useState(false);
     const [view, setView] = useState(STATES.PROFILES);
     const [currentSource, setCurrentSource] = useState('animeflv');
     const [latest, setLatest] = useState([]);
@@ -115,6 +122,79 @@ function App() {
         setView(STATES.HOME);
     };
 
+    const fileInputRef = useRef(null);
+    const [fileType, setFileType] = useState('avatar'); // 'avatar' or 'background'
+
+    const openFileExplorer = (type) => {
+        setFileType(type);
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file && editingProfile) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result;
+                setEditingProfile(prev => ({
+                    ...prev,
+                    [fileType]: base64
+                }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const saveProfile = () => {
+        if (!editingProfile) return;
+        
+        let updatedProfiles;
+        if (isCreatingProfile) {
+            updatedProfiles = [...profiles, editingProfile];
+        } else {
+            updatedProfiles = profiles.map(p => p.id === editingProfile.id ? editingProfile : p);
+        }
+        
+        setProfiles(updatedProfiles);
+        localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
+        
+        if (activeProfile && activeProfile.id === editingProfile.id) {
+            setActiveProfile(editingProfile);
+        }
+        
+        setEditingProfile(null);
+        setIsCreatingProfile(false);
+    };
+
+    const deleteProfile = (profileId) => {
+        if (profiles.length <= 1) {
+            alert('Debe haber al menos un perfil.');
+            return;
+        }
+        if (confirm('¿Estás seguro de que quieres eliminar este perfil?')) {
+            const updatedProfiles = profiles.filter(p => p.id !== profileId);
+            setProfiles(updatedProfiles);
+            localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
+            setEditingProfile(null);
+            setColIndex(0);
+        }
+    };
+
+    const addUser = () => {
+        if (profiles.length >= 5) {
+            alert('Límite de 5 usuarios alcanzado.');
+            return;
+        }
+        setIsCreatingProfile(true);
+        setEditingProfile({
+            id: Date.now(),
+            name: '',
+            avatar: 'https://ui-avatars.com/api/?name=New&background=random&color=fff',
+            background: '',
+            favorites: []
+        });
+    };
+
     const toggleFavorite = (anime) => {
         if (!activeProfile) return;
         
@@ -153,11 +233,18 @@ function App() {
         }
     };
 
+    const selectSource = (sourceId) => {
+        setCurrentSource(sourceId);
+        setView(STATES.HOME);
+        loadLatest(); // Reload content for the new source
+    };
+
     const goBack = () => {
         if (view === STATES.PLAYER) setView(STATES.SERVER_MODAL);
         else if (view === STATES.SERVER_MODAL) setView(details ? STATES.DETAILS : STATES.HOME);
         else if (view === STATES.DETAILS) setView(STATES.HOME);
         else if (view === STATES.SEARCH) setView(STATES.HOME);
+        else if (view === STATES.EXTENSIONS_MODAL) setView(STATES.HOME);
         else if (view === STATES.HOME) setView(STATES.PROFILES);
     };
 
@@ -167,9 +254,12 @@ function App() {
             if (e.key === 'Escape') goBack();
 
             if (view === STATES.PROFILES) {
-                if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, profiles.length - 1));
+                if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, profiles.length));
                 if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
-                if (e.key === 'Enter') selectProfile(profiles[colIndex]);
+                if (e.key === 'Enter') {
+                    if (colIndex === profiles.length) addUser();
+                    else selectProfile(profiles[colIndex]);
+                }
             } else if (view === STATES.HOME) {
                 if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, (rowIndex === 0 ? latest.length : favorites.length) - 1));
                 if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
@@ -236,8 +326,15 @@ function App() {
 
     return (
         <div id="app-root">
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{ display: 'none' }} 
+                accept="image/*" 
+                onChange={handleFileChange} 
+            />
             {view === STATES.PROFILES ? (
-                <div className="profiles-screen">
+                <div className="profiles-screen" style={{ backgroundImage: profiles[colIndex]?.background ? `url(${profiles[colIndex].background})` : 'none' }}>
                     <h1 className="profiles-title">¿Quién está viendo?</h1>
                     <div className="profiles-container">
                         {profiles.map((p, idx) => (
@@ -246,22 +343,79 @@ function App() {
                                 className={`profile-card ${colIndex === idx ? 'focused' : ''}`}
                                 onClick={() => selectProfile(p)}
                             >
-                                <img src={p.avatar} alt={p.name} className="profile-avatar" />
+                                <div className="profile-avatar-wrapper">
+                                    <img src={p.avatar} alt={p.name} className="profile-avatar" />
+                                </div>
                                 <div className="profile-name">{p.name}</div>
                             </div>
                         ))}
+                        {profiles.length < 5 && (
+                            <div 
+                                className={`profile-card add-profile-card ${colIndex === profiles.length ? 'focused' : ''}`}
+                                onClick={addUser}
+                            >
+                                <div className="profile-avatar-wrapper add-icon">
+                                    <span>+</span>
+                                </div>
+                                <div className="profile-name">Agregar perfil</div>
+                            </div>
+                        )}
                     </div>
+
+                    <button className="edit-floating-btn" onClick={() => { setIsCreatingProfile(false); setEditingProfile(profiles[colIndex] || profiles[0]); }}>✎</button>
+
+                    {editingProfile && (
+                        <div className="side-panel-overlay" onClick={(e) => e.target.className === 'side-panel-overlay' && setEditingProfile(null)}>
+                            <div className="side-panel">
+                                <div className="side-panel-header">
+                                    <h2>{isCreatingProfile ? 'Crear Perfil' : 'Editar Perfil'}</h2>
+                                    {!isCreatingProfile && (
+                                        <button className="delete-btn-top" onClick={() => deleteProfile(editingProfile.id)} title="Eliminar Perfil">
+                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="edit-field">
+                                    <label>Nombre</label>
+                                    <input 
+                                        type="text" 
+                                        value={editingProfile.name} 
+                                        onChange={(e) => setEditingProfile({...editingProfile, name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="edit-field">
+                                    <label>Avatar</label>
+                                    <div className="avatar-preview" onClick={() => openFileExplorer('avatar')}>
+                                        <img src={editingProfile.avatar} alt="Avatar" />
+                                        <span>Cambiar</span>
+                                    </div>
+                                </div>
+                                <div className="edit-field">
+                                    <label>Fondo</label>
+                                    <div className="bg-preview" onClick={() => openFileExplorer('background')}>
+                                        {editingProfile.background ? <img src={editingProfile.background} /> : <div className="no-bg">Sin fondo</div>}
+                                        <span>Cambiar</span>
+                                    </div>
+                                </div>
+                                <div className="side-panel-actions">
+                                    <button className="modal-btn save" onClick={saveProfile}>Guardar</button>
+                                    <button className="modal-btn" onClick={() => setEditingProfile(null)}>Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div id="app-container">
                     <header>
                     <div className="header-left">
-                        <span className="nav-link">Servers</span>
+                        <div className="header-user" onClick={() => changeAvatar(activeProfile.id)}>
+                            <img src={activeProfile?.avatar} className="header-avatar" alt="User" />
+                        </div>
                         <span className="nav-link active">Home</span>
-                        <span className="nav-link">TV Series</span>
-                        <span className="nav-link">Variety</span>
-                        <span className="nav-link">Music</span>
-                        <span className="nav-link">More</span>
+                        <span className="nav-link">Catálogo de Anime</span>
                     </div>
                     <div className="header-right">
                         <div
@@ -272,6 +426,12 @@ function App() {
                                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
                             </svg>
                             <span>Search</span>
+                        </div>
+
+                        <div className="source-indicator" onClick={() => setView(STATES.EXTENSIONS_MODAL)}>
+                            <div className="source-circle" style={{ backgroundColor: EXTENSIONS.find(e => e.id === currentSource)?.color }}>
+                                {EXTENSIONS.find(e => e.id === currentSource)?.icon}
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -404,6 +564,29 @@ function App() {
                         ))}
                     </div>
                     <button className="modal-btn" style={{ width: '200px', alignSelf: 'center' }} onClick={() => setView(STATES.HOME)}>Cerrar</button>
+                </div>
+            )}
+
+            {view === STATES.EXTENSIONS_MODAL && (
+                <div className="modal-overlay">
+                    <div className="modal-box">
+                        <h2>Seleccionar Extensión</h2>
+                        <div className="extensions-grid">
+                            {EXTENSIONS.map((ext) => (
+                                <div 
+                                    key={ext.id} 
+                                    className={`extension-card ${currentSource === ext.id ? 'active' : ''}`}
+                                    onClick={() => selectSource(ext.id)}
+                                >
+                                    <div className="extension-icon" style={{ backgroundColor: ext.color }}>
+                                        {ext.icon}
+                                    </div>
+                                    <div className="extension-name">{ext.name}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <button className="modal-btn" onClick={() => setView(STATES.HOME)}>Cerrar</button>
+                    </div>
                 </div>
             )}
 
