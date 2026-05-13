@@ -28,6 +28,7 @@ function App() {
     // Navigation state for "spatial" focus simulation
     const [rowIndex, setRowIndex] = useState(0); // 0: Latest, 1: Favorites, -1: Header
     const [colIndex, setColIndex] = useState(0);
+    const [searchIndex, setSearchIndex] = useState(-1); // -1: input focused
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -63,7 +64,7 @@ function App() {
 
     const handleAnimeClick = (anime) => {
         setSelectedAnime(anime);
-        setView(STATES.ACTION_MODAL);
+        openDetails(anime); // Skip ACTION_MODAL
     };
 
     const openDetails = async (anime) => {
@@ -116,6 +117,7 @@ function App() {
             setStatus('Buscando...');
             const results = await api.searchAnime(searchQuery);
             setSearchResults(results);
+            setSearchIndex(-1); // reset focus to input
             setStatus('');
         }
     };
@@ -150,6 +152,35 @@ function App() {
                         const data = rowIndex === 0 ? latest : favorites;
                         if (data[colIndex]) handleAnimeClick(data[colIndex]);
                     }
+                }
+            } else if (view === STATES.SEARCH) {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    setSearchIndex(prev => {
+                        const next = Math.min(prev + 1, searchResults.length - 1);
+                        if (next > -1 && document.activeElement.tagName === 'INPUT') {
+                            document.activeElement.blur();
+                        }
+                        const el = document.getElementById(`search-card-${next}`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        return next;
+                    });
+                }
+                if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    setSearchIndex(prev => {
+                        const next = prev - 1;
+                        if (next < 0) {
+                            document.querySelector('.search-input')?.focus();
+                            return -1;
+                        }
+                        const el = document.getElementById(`search-card-${next}`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        return next;
+                    });
+                }
+                if (e.key === 'Enter' && searchIndex >= 0) {
+                    handleAnimeClick(searchResults[searchIndex]);
                 }
             }
         };
@@ -299,13 +330,15 @@ function App() {
                     <div className="search-results">
                         {searchResults.map((anime, idx) => (
                             <div 
+                                id={`search-card-${idx}`}
                                 key={idx} 
-                                className="card" 
+                                className={`card ${searchIndex === idx ? 'focused' : ''}`} 
                                 style={{ backgroundImage: `url(${anime.image})`, height: '300px' }}
                                 onClick={() => handleAnimeClick(anime)}
                             >
-                                <div className="card-info">
-                                    <div className="card-title">{anime.title}</div>
+                                <div className="card-overlay-gradient"></div>
+                                <div className="card-info" style={{opacity: 1, transform: 'translateY(0)'}}>
+                                    <div className="card-title" style={{fontSize: '1.2rem'}}>{anime.title}</div>
                                 </div>
                             </div>
                         ))}

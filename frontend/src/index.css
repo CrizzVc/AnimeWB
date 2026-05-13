@@ -353,6 +353,8 @@ header {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
     margin-top: 30px;
+    overflow-y: auto;
+    padding-bottom: 20px;
 }
 
 .search-input {
