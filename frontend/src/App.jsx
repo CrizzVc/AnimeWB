@@ -159,53 +159,47 @@ function App() {
 
     return (
         <div id="app-root">
-            <div id="hero-bg" style={{ backgroundImage: `url(${heroImage})` }}></div>
-            <div className="overlay-gradient"></div>
-
             <div id="app-container">
                 <header>
-                    <div className="logo">AnimeWB</div>
+                    <div className="header-left">
+                        <span className="nav-link">Home</span>
+                        <span className="nav-link active">Movie</span>
+                        <span className="nav-link">TV Series</span>
+                        <span className="nav-link">Variety</span>
+                        <span className="nav-link">Music</span>
+                        <span className="nav-link">More</span>
+                    </div>
                     <div className="header-right">
                         <div 
-                            className={`search-trigger ${rowIndex === -1 ? 'focused' : ''}`}
+                            className={`search-pill ${rowIndex === -1 ? 'focused' : ''}`}
                             onClick={() => setView(STATES.SEARCH)}
                         >
-                            <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
                             </svg>
+                            <span>Search</span>
                         </div>
-                        <span id="clock">{clock}</span>
                     </div>
                 </header>
 
                 <main>
-                    <div className="hero-info">
-                        <h1 id="hero-title">
-                            {view === STATES.HOME 
-                                ? (rowIndex === 0 ? latest[colIndex]?.title : favorites[colIndex]?.title) || 'Cargando...'
-                                : details?.title || selectedAnime?.title}
-                        </h1>
-                        <p id="hero-subtitle">
-                            {view === STATES.HOME 
-                                ? (rowIndex === 0 ? latest[colIndex]?.episode : 'Favorito') || ''
-                                : 'Más Información'}
-                        </p>
-                    </div>
-
                     <div className="carousel-container">
-                        <h2 className="section-title">Últimos Episodios</h2>
                         <div className="carousel-wrapper">
-                            <div className="carousel" style={{ transform: rowIndex === 0 ? `translateX(-${colIndex * 320}px)` : 'none' }}>
+                            <div className="carousel" style={{ transform: rowIndex === 0 ? `translateX(-${colIndex * 215}px)` : 'none' }}>
                                 {latest.map((anime, idx) => (
                                     <div 
                                         key={idx} 
-                                        className={`card ${rowIndex === 0 && colIndex === idx ? 'focused' : ''}`}
+                                        className={`card large-card ${rowIndex === 0 && colIndex === idx ? 'expanded' : ''}`}
                                         style={{ backgroundImage: `url(${anime.image})` }}
                                         onClick={() => handleAnimeClick(anime)}
                                     >
+                                        <div className="card-overlay-gradient"></div>
                                         <div className="card-info">
-                                            <div className="card-episode">{anime.episode}</div>
                                             <div className="card-title">{anime.title}</div>
+                                            <div className="card-rating">
+                                                <span className="score">8.{Math.floor(Math.random() * 9)}</span>
+                                                <span className="stars">★★★★☆</span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -214,20 +208,18 @@ function App() {
                     </div>
 
                     {favorites.length > 0 && (
-                        <div className="carousel-container">
-                            <h2 className="section-title">Mis Favoritos</h2>
+                        <div className="carousel-container mt-40">
+                            <h2 className="section-title"><span className="title-marker"></span>I Recommend</h2>
                             <div className="carousel-wrapper">
-                                <div className="carousel" style={{ transform: rowIndex === 1 ? `translateX(-${colIndex * 320}px)` : 'none' }}>
+                                <div className="carousel" style={{ transform: rowIndex === 1 ? `translateX(-${colIndex * 165}px)` : 'none' }}>
                                     {favorites.map((anime, idx) => (
                                         <div 
                                             key={idx} 
-                                            className={`card ${rowIndex === 1 && colIndex === idx ? 'focused' : ''}`}
+                                            className={`card small-card ${rowIndex === 1 && colIndex === idx ? 'focused' : ''}`}
                                             style={{ backgroundImage: `url(${anime.image})` }}
                                             onClick={() => handleAnimeClick(anime)}
                                         >
-                                            <div className="card-info">
-                                                <div className="card-title">{anime.title}</div>
-                                            </div>
+                                            <div className="card-overlay-gradient"></div>
                                         </div>
                                     ))}
                                 </div>
