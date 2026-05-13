@@ -3,18 +3,30 @@ import * as api from './api';
 import './index.css';
 
 const STATES = {
+    PROFILES: 'PROFILES',
     HOME: 'HOME',
-    ACTION_MODAL: 'ACTION_MODAL',
     DETAILS: 'DETAILS',
     SERVER_MODAL: 'SERVER_MODAL',
     PLAYER: 'PLAYER',
     SEARCH: 'SEARCH'
 };
 
+const DEFAULT_PROFILES = [
+    { id: 1, name: 'User 1', avatar: 'https://ui-avatars.com/api/?name=U1&background=00E5FF&color=fff', favorites: [] },
+    { id: 2, name: 'User 2', avatar: 'https://ui-avatars.com/api/?name=U2&background=FF00E5&color=fff', favorites: [] },
+    { id: 3, name: 'Kids', avatar: 'https://ui-avatars.com/api/?name=K&background=E5FF00&color=000', favorites: [] }
+];
+
 function App() {
-    const [view, setView] = useState(STATES.HOME);
+    const [profiles, setProfiles] = useState(() => {
+        const saved = localStorage.getItem('profiles');
+        return saved ? JSON.parse(saved) : DEFAULT_PROFILES;
+    });
+    const [activeProfile, setActiveProfile] = useState(null);
+    const [view, setView] = useState(STATES.PROFILES);
+    const [currentSource, setCurrentSource] = useState('animeflv');
     const [latest, setLatest] = useState([]);
-    const [favorites, setFavorites] = useState(JSON.parse(localStorage.getItem('favorites') || '[]'));
+    const [favorites, setFavorites] = useState([]);
     const [selectedAnime, setSelectedAnime] = useState(null);
     const [details, setDetails] = useState(null);
     const [servers, setServers] = useState([]);
@@ -22,7 +34,6 @@ function App() {
     const [searchResults, setSearchResults] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [status, setStatus] = useState('');
-    const [heroImage, setHeroImage] = useState('');
     const [clock, setClock] = useState(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
 
     // Navigation state for "spatial" focus simulation
@@ -42,20 +53,17 @@ function App() {
     }, []);
 
     useEffect(() => {
-        if (view === STATES.HOME) {
-            const data = rowIndex === 0 ? latest : favorites;
-            if (data && data[colIndex]) {
-                setHeroImage(data[colIndex].image || data[colIndex].cover);
-            }
+        if (activeProfile) {
+            const filteredFavs = activeProfile.favorites.filter(f => f.source === currentSource);
+            setFavorites(filteredFavs);
         }
-    }, [rowIndex, colIndex, latest, favorites, view]);
+    }, [activeProfile, currentSource]);
 
     const loadLatest = async () => {
         setStatus('Cargando últimos episodios...');
         try {
             const data = await api.fetchLatest();
             setLatest(data);
-            if (data.length > 0) setHeroImage(data[0].image);
             setStatus('');
         } catch (e) {
             setStatus('Error al cargar datos.');
@@ -100,16 +108,39 @@ function App() {
         setView(STATES.PLAYER);
     };
 
+    const selectProfile = (profile) => {
+        setActiveProfile(profile);
+        setColIndex(0);
+        setRowIndex(0);
+        setView(STATES.HOME);
+    };
+
     const toggleFavorite = (anime) => {
-        const isFav = favorites.some(f => f.url === anime.url);
-        let newFavs;
+        if (!activeProfile) return;
+        
+        const isFav = activeProfile.favorites.some(f => f.url === anime.url);
+        let newProfileFavorites;
+        
         if (isFav) {
-            newFavs = favorites.filter(f => f.url !== anime.url);
+            newProfileFavorites = activeProfile.favorites.filter(f => f.url !== anime.url);
         } else {
-            newFavs = [{ title: anime.title, url: anime.url, image: anime.image || anime.cover }, ...favorites];
+            newProfileFavorites = [
+                { 
+                    title: anime.title, 
+                    url: anime.url, 
+                    image: anime.image || anime.cover,
+                    source: currentSource 
+                }, 
+                ...activeProfile.favorites
+            ];
         }
-        setFavorites(newFavs);
-        localStorage.setItem('favorites', JSON.stringify(newFavs));
+
+        const updatedProfile = { ...activeProfile, favorites: newProfileFavorites };
+        const updatedProfiles = profiles.map(p => p.id === activeProfile.id ? updatedProfile : p);
+        
+        setProfiles(updatedProfiles);
+        setActiveProfile(updatedProfile);
+        localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
     };
 
     const handleSearch = async (e) => {
@@ -124,10 +155,10 @@ function App() {
 
     const goBack = () => {
         if (view === STATES.PLAYER) setView(STATES.SERVER_MODAL);
-        else if (view === STATES.SERVER_MODAL) setView(details ? STATES.DETAILS : STATES.ACTION_MODAL);
-        else if (view === STATES.DETAILS) setView(selectedAnime ? STATES.ACTION_MODAL : STATES.HOME);
-        else if (view === STATES.ACTION_MODAL) setView(STATES.HOME);
+        else if (view === STATES.SERVER_MODAL) setView(details ? STATES.DETAILS : STATES.HOME);
+        else if (view === STATES.DETAILS) setView(STATES.HOME);
         else if (view === STATES.SEARCH) setView(STATES.HOME);
+        else if (view === STATES.HOME) setView(STATES.PROFILES);
     };
 
     // Keyboard navigation simulation
@@ -135,7 +166,11 @@ function App() {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') goBack();
 
-            if (view === STATES.HOME) {
+            if (view === STATES.PROFILES) {
+                if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, profiles.length - 1));
+                if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
+                if (e.key === 'Enter') selectProfile(profiles[colIndex]);
+            } else if (view === STATES.HOME) {
                 if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, (rowIndex === 0 ? latest.length : favorites.length) - 1));
                 if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
                 if (e.key === 'ArrowDown') {
@@ -143,9 +178,9 @@ function App() {
                         setRowIndex(0);
                         setColIndex(prev => Math.min(prev, latest.length > 0 ? latest.length - 1 : 0));
                     }
-                    else if (rowIndex === 0 && favorites.length > 0) {
+                    else if (rowIndex === 0) {
                         setRowIndex(1);
-                        setColIndex(prev => Math.min(prev, favorites.length - 1));
+                        setColIndex(prev => favorites.length > 0 ? Math.min(prev, favorites.length - 1) : 0);
                     }
                 }
                 if (e.key === 'ArrowUp') {
@@ -201,8 +236,25 @@ function App() {
 
     return (
         <div id="app-root">
-            <div id="app-container">
-                <header>
+            {view === STATES.PROFILES ? (
+                <div className="profiles-screen">
+                    <h1 className="profiles-title">¿Quién está viendo?</h1>
+                    <div className="profiles-container">
+                        {profiles.map((p, idx) => (
+                            <div 
+                                key={p.id} 
+                                className={`profile-card ${colIndex === idx ? 'focused' : ''}`}
+                                onClick={() => selectProfile(p)}
+                            >
+                                <img src={p.avatar} alt={p.name} className="profile-avatar" />
+                                <div className="profile-name">{p.name}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <div id="app-container">
+                    <header>
                     <div className="header-left">
                         <span className="nav-link">Servers</span>
                         <span className="nav-link active">Home</span>
@@ -249,10 +301,10 @@ function App() {
                         </div>
                     </div>
 
-                    {favorites.length > 0 && (
-                        <div className="carousel-container mt-40">
-                            <h2 className="section-title"><span className="title-marker"></span>I Recommend</h2>
-                            <div className="carousel-wrapper">
+                    <div className="carousel-container mt-40">
+                        <h2 className="section-title"><span className="title-marker"></span>I Recommend</h2>
+                        <div className="carousel-wrapper">
+                            {favorites.length > 0 ? (
                                 <div className="carousel" style={{ transform: rowIndex === 1 ? `translateX(-${colIndex * 165}px)` : 'none' }}>
                                     {favorites.map((anime, idx) => (
                                         <div
@@ -265,26 +317,23 @@ function App() {
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            ) : (
+                                <div className={`empty-favorites ${rowIndex === 1 ? 'focused' : ''}`}>
+                                    <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor" style={{opacity: 0.5}}>
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                    </svg>
+                                    <p>Your favorites list is empty</p>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </main>
 
                 <div id="status">{status}</div>
             </div>
-
-            {/* Modals */}
-            {view === STATES.ACTION_MODAL && (
-                <div className="modal-overlay">
-                    <div className="modal-box">
-                        <h2>{selectedAnime?.title}</h2>
-                        <button className="modal-btn" onClick={() => openServers(selectedAnime.url)}>Reproducir Episodio</button>
-                        <button className="modal-btn" onClick={() => openDetails(selectedAnime)}>Más Episodios</button>
-                        <button className="modal-btn" onClick={() => setView(STATES.HOME)}>Cerrar</button>
-                    </div>
-                </div>
             )}
 
+            {/* Modals */}
             {view === STATES.SERVER_MODAL && (
                 <div className="modal-overlay">
                     <div className="modal-box">
@@ -294,7 +343,7 @@ function App() {
                                 <button key={idx} className="modal-btn" onClick={() => playVideo(s)}>{s.title}</button>
                             ))}
                         </div>
-                        <button className="modal-btn" onClick={() => setView(details ? STATES.DETAILS : STATES.ACTION_MODAL)}>Atrás</button>
+                        <button className="modal-btn" onClick={() => setView(details ? STATES.DETAILS : STATES.HOME)}>Atrás</button>
                     </div>
                 </div>
             )}
