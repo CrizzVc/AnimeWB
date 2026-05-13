@@ -168,6 +168,33 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
+app.get('/api/browse', async (req, res) => {
+    const page = req.query.page || 1;
+    try {
+        const response = await axios.get(`https://www4.animeflv.net/browse?page=${page}`, {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+
+        const $ = cheerio.load(response.data);
+        const results = [];
+
+        $('.ListAnimes li article').each((i, el) => {
+            const title = $(el).find('h3.Title').text().trim();
+            const urlPath = $(el).find('a').attr('href');
+            const url = 'https://www4.animeflv.net' + urlPath;
+            let image = $(el).find('img').attr('src');
+            if (image && image.startsWith('/')) image = 'https://www4.animeflv.net' + image;
+
+            results.push({ title, url, image });
+        });
+
+        return res.json({ success: true, data: results });
+    } catch (error) {
+        console.error("Error in browse:", error.message);
+        return res.status(500).json({ error: "Failed to browse anime." });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`AnimeFLV Scraper Backend running at http://localhost:${PORT}`);
 });

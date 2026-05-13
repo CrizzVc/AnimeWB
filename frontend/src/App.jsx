@@ -9,7 +9,8 @@ const STATES = {
     SERVER_MODAL: 'SERVER_MODAL',
     PLAYER: 'PLAYER',
     SEARCH: 'SEARCH',
-    EXTENSIONS_MODAL: 'EXTENSIONS_MODAL'
+    EXTENSIONS_MODAL: 'EXTENSIONS_MODAL',
+    CATALOG: 'CATALOG'
 };
 
 const EXTENSIONS = [
@@ -33,6 +34,8 @@ function App() {
     const [view, setView] = useState(STATES.PROFILES);
     const [currentSource, setCurrentSource] = useState('animeflv');
     const [latest, setLatest] = useState([]);
+    const [catalogResults, setCatalogResults] = useState([]);
+    const [catalogPage, setCatalogPage] = useState(1);
     const [favorites, setFavorites] = useState([]);
     const [selectedAnime, setSelectedAnime] = useState(null);
     const [details, setDetails] = useState(null);
@@ -147,21 +150,21 @@ function App() {
 
     const saveProfile = () => {
         if (!editingProfile) return;
-        
+
         let updatedProfiles;
         if (isCreatingProfile) {
             updatedProfiles = [...profiles, editingProfile];
         } else {
             updatedProfiles = profiles.map(p => p.id === editingProfile.id ? editingProfile : p);
         }
-        
+
         setProfiles(updatedProfiles);
         localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
-        
+
         if (activeProfile && activeProfile.id === editingProfile.id) {
             setActiveProfile(editingProfile);
         }
-        
+
         setEditingProfile(null);
         setIsCreatingProfile(false);
     };
@@ -197,27 +200,27 @@ function App() {
 
     const toggleFavorite = (anime) => {
         if (!activeProfile) return;
-        
+
         const isFav = activeProfile.favorites.some(f => f.url === anime.url);
         let newProfileFavorites;
-        
+
         if (isFav) {
             newProfileFavorites = activeProfile.favorites.filter(f => f.url !== anime.url);
         } else {
             newProfileFavorites = [
-                { 
-                    title: anime.title, 
-                    url: anime.url, 
+                {
+                    title: anime.title,
+                    url: anime.url,
                     image: anime.image || anime.cover,
-                    source: currentSource 
-                }, 
+                    source: currentSource
+                },
                 ...activeProfile.favorites
             ];
         }
 
         const updatedProfile = { ...activeProfile, favorites: newProfileFavorites };
         const updatedProfiles = profiles.map(p => p.id === activeProfile.id ? updatedProfile : p);
-        
+
         setProfiles(updatedProfiles);
         setActiveProfile(updatedProfile);
         localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
@@ -239,11 +242,27 @@ function App() {
         loadLatest(); // Reload content for the new source
     };
 
+    const loadCatalog = async (page = 1) => {
+        setStatus('Cargando catálogo...');
+        setView(STATES.CATALOG);
+        try {
+            const data = await api.fetchCatalog(page);
+            setCatalogResults(data);
+            setCatalogPage(page);
+            setSearchIndex(0);
+            setStatus('');
+        } catch (e) {
+            console.error("Error al cargar catálogo:", e);
+            setStatus('Error de conexión. Reinicia tu backend (node server.js).');
+        }
+    };
+
     const goBack = () => {
         if (view === STATES.PLAYER) setView(STATES.SERVER_MODAL);
         else if (view === STATES.SERVER_MODAL) setView(details ? STATES.DETAILS : STATES.HOME);
-        else if (view === STATES.DETAILS) setView(STATES.HOME);
+        else if (view === STATES.DETAILS) setView(catalogResults.length > 0 && view !== STATES.HOME ? STATES.CATALOG : STATES.HOME);
         else if (view === STATES.SEARCH) setView(STATES.HOME);
+        else if (view === STATES.CATALOG) setView(STATES.HOME);
         else if (view === STATES.EXTENSIONS_MODAL) setView(STATES.HOME);
         else if (view === STATES.HOME) setView(STATES.PROFILES);
     };
@@ -261,7 +280,7 @@ function App() {
                     else selectProfile(profiles[colIndex]);
                 }
             } else if (view === STATES.HOME) {
-                if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, (rowIndex === 0 ? latest.length : favorites.length) - 1));
+                if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, (rowIndex === -1 ? 3 : (rowIndex === 0 ? latest.length : favorites.length) - 1)));
                 if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
                 if (e.key === 'ArrowDown') {
                     if (rowIndex === -1) {
@@ -274,72 +293,50 @@ function App() {
                     }
                 }
                 if (e.key === 'ArrowUp') {
-                    if (rowIndex === 1) {
-                        setRowIndex(0);
-                        setColIndex(prev => Math.min(prev, latest.length > 0 ? latest.length - 1 : 0));
-                    }
-                    else if (rowIndex === 0) {
-                        setRowIndex(-1);
-                    }
+                    if (rowIndex === 1) setRowIndex(0);
+                    else if (rowIndex === 0) setRowIndex(-1);
                 }
                 if (e.key === 'Enter') {
-                    if (rowIndex === -1) setView(STATES.SEARCH);
+                    if (rowIndex === -1) {
+                        if (colIndex === 0) setView(STATES.HOME);
+                        else if (colIndex === 1) loadCatalog(1);
+                        else if (colIndex === 2) setView(STATES.SEARCH);
+                        else if (colIndex === 3) setView(STATES.EXTENSIONS_MODAL);
+                    }
                     else {
-                        const data = rowIndex === 0 ? latest : favorites;
-                        if (data[colIndex]) handleAnimeClick(data[colIndex]);
+                        const list = rowIndex === 0 ? latest : favorites;
+                        if (list[colIndex]) handleAnimeClick(list[colIndex]);
                     }
                 }
-            } else if (view === STATES.SEARCH) {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    setSearchIndex(prev => {
-                        const next = Math.min(prev + 1, searchResults.length - 1);
-                        if (next > -1 && document.activeElement.tagName === 'INPUT') {
-                            document.activeElement.blur();
-                        }
-                        const el = document.getElementById(`search-card-${next}`);
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        return next;
-                    });
-                }
-                if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    setSearchIndex(prev => {
-                        const next = prev - 1;
-                        if (next < 0) {
-                            document.querySelector('.search-input')?.focus();
-                            return -1;
-                        }
-                        const el = document.getElementById(`search-card-${next}`);
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        return next;
-                    });
-                }
-                if (e.key === 'Enter' && searchIndex >= 0) {
-                    handleAnimeClick(searchResults[searchIndex]);
-                }
+            } else if (view === STATES.SEARCH || view === STATES.CATALOG) {
+                const results = view === STATES.SEARCH ? searchResults : catalogResults;
+                if (e.key === 'ArrowRight') setSearchIndex(prev => Math.min(prev + 1, results.length - 1));
+                if (e.key === 'ArrowLeft') setSearchIndex(prev => Math.max(prev - 1, 0));
+                if (e.key === 'ArrowDown') setSearchIndex(prev => Math.min(prev + 5, results.length - 1));
+                if (e.key === 'ArrowUp') setSearchIndex(prev => Math.max(prev - 5, 0));
+                if (e.key === 'Enter' && results[searchIndex]) handleAnimeClick(results[searchIndex]);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [view, rowIndex, colIndex, latest, favorites, details]);
+    }, [view, colIndex, rowIndex, searchIndex, latest, favorites, searchResults, catalogResults, profiles]);
 
     return (
         <div id="app-root">
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                style={{ display: 'none' }} 
-                accept="image/*" 
-                onChange={handleFileChange} 
+            <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept="image/*"
+                onChange={handleFileChange}
             />
             {view === STATES.PROFILES ? (
                 <div className="profiles-screen" style={{ backgroundImage: profiles[colIndex]?.background ? `url(${profiles[colIndex].background})` : 'none' }}>
                     <h1 className="profiles-title">¿Quién está viendo?</h1>
                     <div className="profiles-container">
                         {profiles.map((p, idx) => (
-                            <div 
-                                key={p.id} 
+                            <div
+                                key={p.id}
                                 className={`profile-card ${colIndex === idx ? 'focused' : ''}`}
                                 onClick={() => selectProfile(p)}
                             >
@@ -350,7 +347,7 @@ function App() {
                             </div>
                         ))}
                         {profiles.length < 5 && (
-                            <div 
+                            <div
                                 className={`profile-card add-profile-card ${colIndex === profiles.length ? 'focused' : ''}`}
                                 onClick={addUser}
                             >
@@ -372,17 +369,17 @@ function App() {
                                     {!isCreatingProfile && (
                                         <button className="delete-btn-top" onClick={() => deleteProfile(editingProfile.id)} title="Eliminar Perfil">
                                             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                                             </svg>
                                         </button>
                                     )}
                                 </div>
                                 <div className="edit-field">
                                     <label>Nombre</label>
-                                    <input 
-                                        type="text" 
-                                        value={editingProfile.name} 
-                                        onChange={(e) => setEditingProfile({...editingProfile, name: e.target.value})}
+                                    <input
+                                        type="text"
+                                        value={editingProfile.name}
+                                        onChange={(e) => setEditingProfile({ ...editingProfile, name: e.target.value })}
                                     />
                                 </div>
                                 <div className="edit-field">
@@ -410,87 +407,138 @@ function App() {
             ) : (
                 <div id="app-container">
                     <header>
-                    <div className="header-left">
-                        <div className="header-user" onClick={() => changeAvatar(activeProfile.id)}>
-                            <img src={activeProfile?.avatar} className="header-avatar" alt="User" />
+                        <div className="header-left">
+                            <div className="header-user" onClick={() => changeAvatar(activeProfile.id)}>
+                                <img src={activeProfile?.avatar} className="header-avatar" alt="User" />
+                            </div>
+                            <span
+                                className={`nav-link ${(rowIndex === -1 && colIndex === 0) ? 'focused' : ''} ${view === STATES.HOME ? 'active' : ''}`}
+                                onClick={() => setView(STATES.HOME)}
+                            >
+                                Home
+                            </span>
+                            <span
+                                className={`nav-link ${(rowIndex === -1 && colIndex === 1) ? 'focused' : ''} ${view === STATES.CATALOG ? 'active' : ''}`}
+                                onClick={() => loadCatalog(1)}
+                            >
+                                Catálogo de Anime
+                            </span>
                         </div>
-                        <span className="nav-link active">Home</span>
-                        <span className="nav-link">Catálogo de Anime</span>
-                    </div>
-                    <div className="header-right">
-                        <div
-                            className={`search-pill ${rowIndex === -1 ? 'focused' : ''}`}
-                            onClick={() => setView(STATES.SEARCH)}
-                        >
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-                            </svg>
-                            <span>Search</span>
-                        </div>
+                        <div className="header-right">
+                            <div
+                                className={`search-pill ${(rowIndex === -1 && colIndex === 2) ? 'focused' : ''}`}
+                                onClick={() => setView(STATES.SEARCH)}
+                            >
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                                </svg>
+                                <span>Search</span>
+                            </div>
 
-                        <div className="source-indicator" onClick={() => setView(STATES.EXTENSIONS_MODAL)}>
-                            <div className="source-circle" style={{ backgroundColor: EXTENSIONS.find(e => e.id === currentSource)?.color }}>
-                                {EXTENSIONS.find(e => e.id === currentSource)?.icon}
+                            <div
+                                className={`extension-selector ${(rowIndex === -1 && colIndex === 3) ? 'focused' : ''}`}
+                                onClick={() => setView(STATES.EXTENSIONS_MODAL)}
+                            >   </div>
+
+                            <div className="source-indicator" onClick={() => setView(STATES.EXTENSIONS_MODAL)}>
+                                <div className="source-circle" style={{ backgroundColor: EXTENSIONS.find(e => e.id === currentSource)?.color }}>
+                                    {EXTENSIONS.find(e => e.id === currentSource)?.icon}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </header>
+                    </header>
 
-                <main>
-                    <div className="carousel-container">
-                        <div className="carousel-wrapper">
-                            <div className="carousel" style={{ transform: rowIndex === 0 ? `translateX(-${colIndex * 215}px)` : 'none' }}>
-                                {latest.map((anime, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`card large-card ${rowIndex === 0 && colIndex === idx ? 'expanded' : ''}`}
-                                        style={{ backgroundImage: `url(${anime.image})` }}
-                                        onClick={() => handleAnimeClick(anime)}
-                                    >
-                                        <div className="card-overlay-gradient"></div>
-                                        <div className="card-info">
-                                            <div className="card-title">{anime.title}</div>
-                                            <div className="card-rating">
-                                                <span className="score">8.{Math.floor(Math.random() * 9)}</span>
-                                                <span className="stars">★★★★☆</span>
-                                            </div>
+                    <main>
+                        {view === STATES.HOME && (
+                            <>
+                                <div className="carousel-container">
+                                    <div className="carousel-wrapper">
+                                        <div className="carousel" style={{ transform: rowIndex === 0 ? `translateX(-${colIndex * 215}px)` : 'none' }}>
+                                            {latest.map((anime, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className={`card large-card ${rowIndex === 0 && colIndex === idx ? 'expanded' : ''}`}
+                                                    style={{ backgroundImage: `url(${anime.image})` }}
+                                                    onClick={() => handleAnimeClick(anime)}
+                                                >
+                                                    <div className="card-overlay-gradient"></div>
+                                                    <div className="card-info">
+                                                        <div className="card-title">{anime.title}</div>
+                                                        <div className="card-rating">
+                                                            <span className="score">8.{Math.floor(Math.random() * 9)}</span>
+                                                            <span className="stars">★★★★☆</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                                </div>
 
-                    <div className="carousel-container mt-40">
-                        <h2 className="section-title"><span className="title-marker"></span>I Recommend</h2>
-                        <div className="carousel-wrapper">
-                            {favorites.length > 0 ? (
-                                <div className="carousel" style={{ transform: rowIndex === 1 ? `translateX(-${colIndex * 165}px)` : 'none' }}>
-                                    {favorites.map((anime, idx) => (
+                                <div className="carousel-container mt-40">
+                                    <h2 className="section-title"><span className="title-marker"></span>I Recommend</h2>
+                                    <div className="carousel-wrapper">
+                                        {favorites.length > 0 ? (
+                                            <div className="carousel" style={{ transform: rowIndex === 1 ? `translateX(-${colIndex * 165}px)` : 'none' }}>
+                                                {favorites.map((anime, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className={`card small-card ${rowIndex === 1 && colIndex === idx ? 'focused' : ''}`}
+                                                        style={{ backgroundImage: `url(${anime.image})` }}
+                                                        onClick={() => handleAnimeClick(anime)}
+                                                    >
+                                                        <div className="card-overlay-gradient"></div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className={`empty-favorites ${rowIndex === 1 ? 'focused' : ''}`}>
+                                                <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor" style={{ opacity: 0.5 }}>
+                                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                                </svg>
+                                                <p>Your favorites list is empty</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {view === STATES.CATALOG && (
+                            <div className="catalog-tab" style={{ padding: '20px 40px' }}>
+                                <h2 className="section-title"><span className="title-marker"></span>Catálogo Completo</h2>
+                                <div className="search-grid" style={{ marginTop: '20px' }}>
+                                    {catalogResults.map((anime, idx) => (
                                         <div
                                             key={idx}
-                                            className={`card small-card ${rowIndex === 1 && colIndex === idx ? 'focused' : ''}`}
-                                            style={{ backgroundImage: `url(${anime.image})` }}
+                                            className={`search-card ${searchIndex === idx ? 'focused' : ''}`}
                                             onClick={() => handleAnimeClick(anime)}
                                         >
-                                            <div className="card-overlay-gradient"></div>
+                                            <img src={anime.image} alt={anime.title} />
+                                            <div className="search-card-info">
+                                                <div className="search-card-title">{anime.title}</div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                            ) : (
-                                <div className={`empty-favorites ${rowIndex === 1 ? 'focused' : ''}`}>
-                                    <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor" style={{opacity: 0.5}}>
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                    </svg>
-                                    <p>Your favorites list is empty</p>
+                                <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '40px', paddingBottom: '40px' }}>
+                                    <button 
+                                        className="modal-btn" 
+                                        disabled={catalogPage === 1} 
+                                        onClick={() => loadCatalog(catalogPage - 1)}
+                                    >Anterior</button>
+                                    <span style={{ margin: '0 20px', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>Página {catalogPage}</span>
+                                    <button 
+                                        className="modal-btn" 
+                                        onClick={() => loadCatalog(catalogPage + 1)}
+                                    >Siguiente</button>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                </main>
+                            </div>
+                        )}
+                    </main>
 
-                <div id="status">{status}</div>
-            </div>
+                    <div id="status">{status}</div>
+                </div>
             )}
 
             {/* Modals */}
@@ -547,18 +595,16 @@ function App() {
                             onKeyDown={handleSearch}
                         />
                     </div>
-                    <div className="search-results">
+                    <div className="search-grid">
                         {searchResults.map((anime, idx) => (
                             <div
-                                id={`search-card-${idx}`}
                                 key={idx}
-                                className={`card ${searchIndex === idx ? 'focused' : ''}`}
-                                style={{ backgroundImage: `url(${anime.image})`, height: '300px' }}
+                                className={`search-card ${searchIndex === idx ? 'focused' : ''}`}
                                 onClick={() => handleAnimeClick(anime)}
                             >
-                                <div className="card-overlay-gradient"></div>
-                                <div className="card-info" style={{ opacity: 1, transform: 'translateY(0)' }}>
-                                    <div className="card-title" style={{ fontSize: '1.2rem' }}>{anime.title}</div>
+                                <img src={anime.image} alt={anime.title} />
+                                <div className="search-card-info">
+                                    <div className="search-card-title">{anime.title}</div>
                                 </div>
                             </div>
                         ))}
@@ -567,14 +613,16 @@ function App() {
                 </div>
             )}
 
+
+
             {view === STATES.EXTENSIONS_MODAL && (
                 <div className="modal-overlay">
                     <div className="modal-box">
                         <h2>Seleccionar Extensión</h2>
                         <div className="extensions-grid">
                             {EXTENSIONS.map((ext) => (
-                                <div 
-                                    key={ext.id} 
+                                <div
+                                    key={ext.id}
                                     className={`extension-card ${currentSource === ext.id ? 'active' : ''}`}
                                     onClick={() => selectSource(ext.id)}
                                 >
@@ -592,13 +640,16 @@ function App() {
 
             {view === STATES.PLAYER && (
                 <div id="player-overlay">
-                    <iframe id="video-frame" src={playerUrl} allowFullScreen allow="autoplay"></iframe>
-                    <button
-                        style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 3000 }}
-                        className="modal-btn"
-                        onClick={() => setView(STATES.SERVER_MODAL)}
-                    >
-                        Cerrar Reproductor
+                    <iframe
+                        id="video-frame"
+                        src={playerUrl}
+                        allowFullScreen
+                        allow="autoplay; fullscreen"
+                    ></iframe>
+                    <button className="player-back-btn" onClick={() => setView(STATES.SERVER_MODAL)} title="Volver (Esc)">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                        </svg>
                     </button>
                 </div>
             )}

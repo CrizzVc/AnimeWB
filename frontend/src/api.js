@@ -23,3 +23,9 @@ export const searchAnime = async (query) => {
     const data = await res.json();
     return data.success ? data.data : [];
 };
+
+export const fetchCatalog = async (page = 1) => {
+    const res = await fetch(`${API_BASE_URL}/api/browse?page=${page}`);
+    const data = await res.json();
+    return data.success ? data.data : [];
+};

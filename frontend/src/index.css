@@ -62,20 +62,22 @@ header {
 }
 
 .nav-link {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: var(--text-dim);
-    text-decoration: none;
     cursor: pointer;
+    color: var(--text-dim);
+    font-weight: 600;
     transition: all 0.3s;
-    position: relative;
-    padding-bottom: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
 }
 
-.nav-link:hover,
+.nav-link:hover, .nav-link.focused {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
 .nav-link.active {
-    color: var(--text-color);
-    font-weight: bold;
+    color: var(--primary-color);
 }
 
 .nav-link.active::after {
@@ -387,6 +389,35 @@ header {
     height: 100%;
     background: black;
     z-index: 2000;
+}
+
+.player-back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transition: all 0.3s;
+}
+
+#player-overlay:hover .player-back-btn {
+    opacity: 1;
+}
+
+.player-back-btn:hover {
+    background: var(--primary-color);
+    transform: scale(1.1);
 }
 
 #video-frame {
@@ -849,4 +880,50 @@ header {
 
 .modal-btn.save {
     background: var(--primary-color);
+}
+
+/* Search and Catalog Grid */
+.search-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    width: 100%;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.search-card {
+    background: #2a2a2d;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 3px solid transparent;
+}
+
+.search-card.focused {
+    border-color: white;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.search-card img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.search-card-info {
+    padding: 10px;
+}
+
+.search-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
