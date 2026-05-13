@@ -23,6 +23,8 @@ const DEFAULT_PROFILES = [
     { id: 1, name: 'User 1', avatar: 'https://ui-avatars.com/api/?name=U1&background=00E5FF&color=fff', background: '', favorites: [] }
 ];
 
+const TOTAL_CATALOG_PAGES = 180;
+
 function App() {
     const [profiles, setProfiles] = useState(() => {
         const saved = localStorage.getItem('profiles');
@@ -250,7 +252,9 @@ function App() {
             setCatalogResults(data);
             setCatalogPage(page);
             setSearchIndex(0);
+            setRowIndex(0); // Move focus from header to grid automatically on load
             setStatus('');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (e) {
             console.error("Error al cargar catálogo:", e);
             setStatus('Error de conexión. Reinicia tu backend (node server.js).');
@@ -309,17 +313,71 @@ function App() {
                     }
                 }
             } else if (view === STATES.SEARCH || view === STATES.CATALOG) {
-                const results = view === STATES.SEARCH ? searchResults : catalogResults;
-                if (e.key === 'ArrowRight') setSearchIndex(prev => Math.min(prev + 1, results.length - 1));
-                if (e.key === 'ArrowLeft') setSearchIndex(prev => Math.max(prev - 1, 0));
-                if (e.key === 'ArrowDown') setSearchIndex(prev => Math.min(prev + 5, results.length - 1));
-                if (e.key === 'ArrowUp') setSearchIndex(prev => Math.max(prev - 5, 0));
-                if (e.key === 'Enter' && results[searchIndex]) handleAnimeClick(results[searchIndex]);
+                if (rowIndex === -1) {
+                    // Header navigation in Search/Catalog views
+                    if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, 3));
+                    if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
+                    if (e.key === 'ArrowDown') {
+                        setRowIndex(0);
+                        setSearchIndex(prev => prev >= 0 ? prev : 0);
+                    }
+                    if (e.key === 'Enter') {
+                        if (colIndex === 0) setView(STATES.HOME);
+                        else if (colIndex === 1) loadCatalog(1);
+                        else if (colIndex === 2) setView(STATES.SEARCH);
+                        else if (colIndex === 3) setView(STATES.EXTENSIONS_MODAL);
+                    }
+                } else {
+                    // Grid navigation
+                    const results = view === STATES.SEARCH ? searchResults : catalogResults;
+                    if (e.key === 'ArrowRight') setSearchIndex(prev => Math.min(prev + 1, results.length - 1));
+                    if (e.key === 'ArrowLeft') setSearchIndex(prev => Math.max(prev - 1, 0));
+                    if (e.key === 'ArrowDown') setSearchIndex(prev => Math.min(prev + 5, results.length - 1));
+                    if (e.key === 'ArrowUp') {
+                        if (searchIndex < 5) {
+                            setRowIndex(-1);
+                            setColIndex(view === STATES.CATALOG ? 1 : 2); // Return to corresponding tab
+                        } else {
+                            setSearchIndex(prev => Math.max(prev - 5, 0));
+                        }
+                    }
+                    if (e.key === 'Enter' && results[searchIndex]) handleAnimeClick(results[searchIndex]);
+                }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [view, colIndex, rowIndex, searchIndex, latest, favorites, searchResults, catalogResults, profiles]);
+
+    const renderPagination = () => {
+        const items = [];
+        items.push({ type: 'first', label: '<<', disabled: catalogPage === 1 });
+        items.push({ type: 'prev', label: '<', disabled: catalogPage === 1 });
+        
+        const pagesToShow = new Set();
+        pagesToShow.add(1);
+        pagesToShow.add(TOTAL_CATALOG_PAGES);
+        pagesToShow.add(catalogPage);
+        pagesToShow.add(catalogPage - 1);
+        pagesToShow.add(catalogPage + 1);
+        
+        const validPages = Array.from(pagesToShow).filter(p => p > 0 && p <= TOTAL_CATALOG_PAGES).sort((a, b) => a - b);
+        
+        const pageItems = [];
+        let last = 0;
+        for (const p of validPages) {
+            if (last && p - last > 1) {
+                pageItems.push({ type: 'ellipsis', label: '...' });
+            }
+            pageItems.push({ type: 'page', label: p });
+            last = p;
+        }
+        
+        items.push(...pageItems);
+        items.push({ type: 'next', label: '>', disabled: catalogPage === TOTAL_CATALOG_PAGES });
+        items.push({ type: 'last', label: '>>', disabled: catalogPage === TOTAL_CATALOG_PAGES });
+        return items;
+    };
 
     return (
         <div id="app-root">
@@ -511,7 +569,7 @@ function App() {
                                     {catalogResults.map((anime, idx) => (
                                         <div
                                             key={idx}
-                                            className={`search-card ${searchIndex === idx ? 'focused' : ''}`}
+                                            className={`search-card ${searchIndex === idx && rowIndex !== -1 ? 'focused' : ''}`}
                                             onClick={() => handleAnimeClick(anime)}
                                         >
                                             <img src={anime.image} alt={anime.title} />
@@ -521,17 +579,29 @@ function App() {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '40px', paddingBottom: '40px' }}>
-                                    <button 
-                                        className="modal-btn" 
-                                        disabled={catalogPage === 1} 
-                                        onClick={() => loadCatalog(catalogPage - 1)}
-                                    >Anterior</button>
-                                    <span style={{ margin: '0 20px', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>Página {catalogPage}</span>
-                                    <button 
-                                        className="modal-btn" 
-                                        onClick={() => loadCatalog(catalogPage + 1)}
-                                    >Siguiente</button>
+                                <div className="custom-pagination">
+                                    {renderPagination().map((item, idx) => {
+                                        if (item.type === 'ellipsis') {
+                                            return <span key={idx} className="page-ellipsis">...</span>;
+                                        }
+                                        
+                                        let onClick = () => {};
+                                        if (!item.disabled) {
+                                            if (item.type === 'page') onClick = () => loadCatalog(item.label);
+                                            else if (item.type === 'first') onClick = () => loadCatalog(1);
+                                            else if (item.type === 'prev') onClick = () => loadCatalog(catalogPage - 1);
+                                            else if (item.type === 'next') onClick = () => loadCatalog(catalogPage + 1);
+                                            else if (item.type === 'last') onClick = () => loadCatalog(TOTAL_CATALOG_PAGES);
+                                        }
+
+                                        const className = `page-btn ${item.type === 'page' && item.label === catalogPage ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`;
+                                        
+                                        return (
+                                            <button key={idx} className={className} disabled={item.disabled} onClick={onClick}>
+                                                {item.label}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -599,7 +669,7 @@ function App() {
                         {searchResults.map((anime, idx) => (
                             <div
                                 key={idx}
-                                className={`search-card ${searchIndex === idx ? 'focused' : ''}`}
+                                className={`search-card ${searchIndex === idx && rowIndex !== -1 ? 'focused' : ''}`}
                                 onClick={() => handleAnimeClick(anime)}
                             >
                                 <img src={anime.image} alt={anime.title} />

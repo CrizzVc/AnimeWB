@@ -68,6 +68,7 @@ header {
     transition: all 0.3s;
     padding: 8px 16px;
     border-radius: 20px;
+    position: relative;
 }
 
 .nav-link:hover, .nav-link.focused {
@@ -926,4 +927,53 @@ header {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+/* Pagination Layout */
+.custom-pagination {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 40px;
+    padding-bottom: 40px;
+}
+
+.page-btn {
+    min-width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.page-btn:not(.disabled):hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.page-btn.active {
+    background: #555;
+    color: white;
+    border-color: #555;
+}
+
+.page-btn.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.page-ellipsis {
+    color: var(--text-dim);
+    padding: 0 4px;
+    font-weight: bold;
+    letter-spacing: 2px;
 }
