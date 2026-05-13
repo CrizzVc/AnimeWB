@@ -134,17 +134,28 @@ function App() {
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') goBack();
-            
+
             if (view === STATES.HOME) {
                 if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, (rowIndex === 0 ? latest.length : favorites.length) - 1));
                 if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
                 if (e.key === 'ArrowDown') {
-                    if (rowIndex === -1) setRowIndex(0);
-                    else if (rowIndex === 0 && favorites.length > 0) setRowIndex(1);
+                    if (rowIndex === -1) {
+                        setRowIndex(0);
+                        setColIndex(prev => Math.min(prev, latest.length > 0 ? latest.length - 1 : 0));
+                    }
+                    else if (rowIndex === 0 && favorites.length > 0) {
+                        setRowIndex(1);
+                        setColIndex(prev => Math.min(prev, favorites.length - 1));
+                    }
                 }
                 if (e.key === 'ArrowUp') {
-                    if (rowIndex === 1) setRowIndex(0);
-                    else if (rowIndex === 0) setRowIndex(-1);
+                    if (rowIndex === 1) {
+                        setRowIndex(0);
+                        setColIndex(prev => Math.min(prev, latest.length > 0 ? latest.length - 1 : 0));
+                    }
+                    else if (rowIndex === 0) {
+                        setRowIndex(-1);
+                    }
                 }
                 if (e.key === 'Enter') {
                     if (rowIndex === -1) setView(STATES.SEARCH);
@@ -193,15 +204,15 @@ function App() {
             <div id="app-container">
                 <header>
                     <div className="header-left">
-                        <span className="nav-link">Home</span>
-                        <span className="nav-link active">Movie</span>
+                        <span className="nav-link">Servers</span>
+                        <span className="nav-link active">Home</span>
                         <span className="nav-link">TV Series</span>
                         <span className="nav-link">Variety</span>
                         <span className="nav-link">Music</span>
                         <span className="nav-link">More</span>
                     </div>
                     <div className="header-right">
-                        <div 
+                        <div
                             className={`search-pill ${rowIndex === -1 ? 'focused' : ''}`}
                             onClick={() => setView(STATES.SEARCH)}
                         >
@@ -218,8 +229,8 @@ function App() {
                         <div className="carousel-wrapper">
                             <div className="carousel" style={{ transform: rowIndex === 0 ? `translateX(-${colIndex * 215}px)` : 'none' }}>
                                 {latest.map((anime, idx) => (
-                                    <div 
-                                        key={idx} 
+                                    <div
+                                        key={idx}
                                         className={`card large-card ${rowIndex === 0 && colIndex === idx ? 'expanded' : ''}`}
                                         style={{ backgroundImage: `url(${anime.image})` }}
                                         onClick={() => handleAnimeClick(anime)}
@@ -244,8 +255,8 @@ function App() {
                             <div className="carousel-wrapper">
                                 <div className="carousel" style={{ transform: rowIndex === 1 ? `translateX(-${colIndex * 165}px)` : 'none' }}>
                                     {favorites.map((anime, idx) => (
-                                        <div 
-                                            key={idx} 
+                                        <div
+                                            key={idx}
                                             className={`card small-card ${rowIndex === 1 && colIndex === idx ? 'focused' : ''}`}
                                             style={{ backgroundImage: `url(${anime.image})` }}
                                             onClick={() => handleAnimeClick(anime)}
@@ -292,7 +303,7 @@ function App() {
                 <div className="view-overlay">
                     <div className="details-left">
                         <img src={details.cover} className="details-cover" alt="Cover" />
-                        <button 
+                        <button
                             className={`modal-btn ${favorites.some(f => f.url === selectedAnime?.url) ? 'active' : ''}`}
                             onClick={() => toggleFavorite(selectedAnime || details)}
                         >
@@ -318,10 +329,10 @@ function App() {
             {view === STATES.SEARCH && (
                 <div className="view-overlay" style={{ flexDirection: 'column' }}>
                     <div className="search-header">
-                        <input 
+                        <input
                             autoFocus
-                            className="search-input" 
-                            placeholder="Buscar anime..." 
+                            className="search-input"
+                            placeholder="Buscar anime..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={handleSearch}
@@ -329,16 +340,16 @@ function App() {
                     </div>
                     <div className="search-results">
                         {searchResults.map((anime, idx) => (
-                            <div 
+                            <div
                                 id={`search-card-${idx}`}
-                                key={idx} 
-                                className={`card ${searchIndex === idx ? 'focused' : ''}`} 
+                                key={idx}
+                                className={`card ${searchIndex === idx ? 'focused' : ''}`}
                                 style={{ backgroundImage: `url(${anime.image})`, height: '300px' }}
                                 onClick={() => handleAnimeClick(anime)}
                             >
                                 <div className="card-overlay-gradient"></div>
-                                <div className="card-info" style={{opacity: 1, transform: 'translateY(0)'}}>
-                                    <div className="card-title" style={{fontSize: '1.2rem'}}>{anime.title}</div>
+                                <div className="card-info" style={{ opacity: 1, transform: 'translateY(0)' }}>
+                                    <div className="card-title" style={{ fontSize: '1.2rem' }}>{anime.title}</div>
                                 </div>
                             </div>
                         ))}
@@ -350,9 +361,9 @@ function App() {
             {view === STATES.PLAYER && (
                 <div id="player-overlay">
                     <iframe id="video-frame" src={playerUrl} allowFullScreen allow="autoplay"></iframe>
-                    <button 
-                        style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 3000 }} 
-                        className="modal-btn" 
+                    <button
+                        style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 3000 }}
+                        className="modal-btn"
                         onClick={() => setView(STATES.SERVER_MODAL)}
                     >
                         Cerrar Reproductor
