@@ -45,6 +45,13 @@
    npm run dev
    ```
 
+4. release the app
+
+```bash
+# In a new terminal
+cd frontend
+npm run dist
+```
 ---
 
 ## 🛠️ Technology Stack
