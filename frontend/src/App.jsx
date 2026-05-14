@@ -17,8 +17,8 @@ const STATES = {
 const EXTENSIONS = [
     { id: 'animeflv', name: 'AnimeFLV', icon: 'AF', color: '#ff8a00' },
     { id: 'animeav1', name: 'AnimeAV1', icon: 'A1', color: '#6366f1' },
-    { id: 'monoschinos', name: 'MonoChinos', icon: 'MC', color: '#00e5ff' },
-    { id: 'tioanime', name: 'TioAnime', icon: 'TA', color: '#ff00e5' }
+    // { id: 'monoschinos', name: 'MonoChinos', icon: 'MC', color: '#00e5ff' },
+    // { id: 'tioanime', name: 'TioAnime', icon: 'TA', color: '#ff00e5' }
 ];
 
 const DEFAULT_PROFILES = [
@@ -650,19 +650,43 @@ function App() {
 
             {view === STATES.DETAILS && details && (
                 <div className="view-overlay">
+                    <div className="details-bg" style={{ backgroundImage: `url(${details.backdrop || details.cover})` }}></div>
                     <div className="details-left">
                         <img src={details.cover} className="details-cover" alt="Cover" />
-                        <button
-                            className={`modal-btn ${favorites.some(f => f.url === selectedAnime?.url) ? 'active' : ''}`}
-                            onClick={() => toggleFavorite(selectedAnime || details)}
-                        >
-                            {favorites.some(f => f.url === selectedAnime?.url) ? '❤️ En Favoritos' : '🤍 Añadir a Favoritos'}
-                        </button>
+
+                        <div className="flex flex-col gap-3 mt-4">
+                            <button
+                                className={`modal-btn ${favorites.some(f => f.url === selectedAnime?.url) ? 'active' : ''}`}
+                                onClick={() => toggleFavorite(selectedAnime || details)}
+                                style={{ marginTop: 0 }}
+                            >
+                                {favorites.some(f => f.url === selectedAnime?.url) ? '❤️ En Favoritos' : '🤍 Añadir a Favoritos'}
+                            </button>
+
+                            {details.status && (
+                                <div className={`status-badge ${details.status.toLowerCase().includes('finalizado') ? 'finalizado' : ''}`}>
+                                    <span className="ic-monitor ic-before"></span>
+                                    {details.status}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="details-right">
-                        <h1>{details.title}</h1>
-                        <p>{details.synopsis}</p>
-                        <h3>Episodios</h3>
+                        <h1 style={{ fontSize: '3rem', marginBottom: '10px' }}>{details.title}</h1>
+                        
+                        <div className="synopsis-box">
+                            <h2>Sinopsis</h2>
+                            {details.genres && details.genres.length > 0 && (
+                                <div className="genres-list">
+                                    {details.genres.map((g, idx) => (
+                                        <span key={idx} className="genre-pill">{g}</span>
+                                    ))}
+                                </div>
+                            )}
+                            <p className="synopsis-text">{details.synopsis}</p>
+                        </div>
+
+                        <h3 style={{ marginTop: '30px', fontSize: '1.5rem' }}>Episodios</h3>
                         <div className="episodes-list">
                             {details.episodes.map((ep, idx) => (
                                 <div key={idx} className="episode-item" onClick={() => openServers(ep.url)}>
@@ -670,7 +694,7 @@ function App() {
                                 </div>
                             ))}
                         </div>
-                        <button className="modal-btn" onClick={() => setView(STATES.HOME)}>Cerrar</button>
+                        <button className="modal-btn mt-6" onClick={() => setView(STATES.HOME)}>Cerrar</button>
                     </div>
                 </div>
             )}

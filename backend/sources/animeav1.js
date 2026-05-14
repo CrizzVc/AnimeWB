@@ -53,6 +53,16 @@ const animeav1 = {
         const title = $('h1').first().text().trim();
         const synopsis = $('.text-subs.leading-relaxed').text().trim() || $('p').first().text().trim();
         const cover = $('img[alt*="Poster"]').attr('src') || $('img[alt*="Poster"]').attr('data-src') || $('img').eq(2).attr('src');
+        const backdrop = $('img[alt*="Backdrop"]').attr('src') || $('img[alt*="Backdrop"]').attr('data-src');
+
+        const status = $('.text-subs.bg-main').text().trim() || $('.bg-soft.text-subs').first().text().trim();
+        const genres = [];
+        $('.bg-soft.text-subs').each((i, el) => {
+            const text = $(el).text().trim();
+            if (text && text.length < 20 && !text.includes('hace')) {
+                genres.push(text);
+            }
+        });
 
         const episodes = [];
         $('a[href*="/media/"]').each((i, el) => {
@@ -73,7 +83,7 @@ const animeav1 = {
         // Sort episodes descending
         episodes.sort((a, b) => parseInt(b.episode) - parseInt(a.episode));
 
-        return { title, synopsis, cover, episodes };
+        return { title, synopsis, cover, backdrop, status, genres, episodes };
     },
 
     getServers: async (url) => {

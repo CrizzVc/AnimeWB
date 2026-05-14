@@ -40,6 +40,12 @@ const animeflv = {
         let cover = $('.AnimeCover .Image figure img').attr('src');
         if (cover && cover.startsWith('/')) cover = BASE_URL + cover;
 
+        const status = $('.AnmStts span').text().trim();
+        const genres = [];
+        $('.Genres a').each((i, el) => {
+            genres.push($(el).text().trim());
+        });
+
         let episodes = [];
         $('script').each((i, el) => {
             const text = $(el).html();
