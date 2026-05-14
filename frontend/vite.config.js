@@ -9,6 +9,14 @@ export default defineConfig({
     react(),
     electron({
       entry: 'electron/main.js',
+      vite: {
+        build: {
+          target: 'node18',
+          rollupOptions: {
+            external: ['axios', 'cheerio', 'undici'],
+          },
+        },
+      },
     }),
     renderer(),
   ],
