@@ -36,6 +36,7 @@ function App() {
     const [editingProfile, setEditingProfile] = useState(null);
     const [isCreatingProfile, setIsCreatingProfile] = useState(false);
     const [view, setView] = useState(STATES.PROFILES);
+    const [expandedSynopsis, setExpandedSynopsis] = useState(false);
     const [currentSource, setCurrentSource] = useState('animeflv');
     const [latest, setLatest] = useState([]);
     const [catalogResults, setCatalogResults] = useState([]);
@@ -683,7 +684,17 @@ function App() {
                                     ))}
                                 </div>
                             )}
-                            <p className="synopsis-text">{details.synopsis}</p>
+                            <p className={`synopsis-text ${expandedSynopsis ? 'expanded' : ''}`}>
+                                {details.synopsis}
+                            </p>
+                            {details.synopsis && details.synopsis.length > 200 && (
+                                <button 
+                                    className="text-primary mt-2 font-bold hover:underline"
+                                    onClick={() => setExpandedSynopsis(!expandedSynopsis)}
+                                >
+                                    {expandedSynopsis ? 'Leer menos' : 'Leer más...'}
+                                </button>
+                            )}
                         </div>
 
                         {details.related && details.related.length > 0 && (

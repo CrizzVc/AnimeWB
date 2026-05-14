@@ -47,13 +47,18 @@ const animeflv = {
         });
 
         const related = [];
-        $('.ListAnimes.Axis li').each((i, el) => {
-            const title = $(el).find('.Title').text().trim();
-            const url = $(el).find('a').attr('href');
-            let image = $(el).find('img').attr('src');
-            if (image && image.startsWith('/')) image = BASE_URL + image;
+        $('.ListAnmRel li').each((i, el) => {
+            const link = $(el).find('a');
+            const title = link.text().trim();
+            const url = link.attr('href');
+            const type = $(el).text().replace(title, '').trim() || 'Relacionado';
             if (url) {
-                related.push({ title, url: BASE_URL + url, image });
+                related.push({ 
+                    title, 
+                    url: url.startsWith('http') ? url : BASE_URL + url, 
+                    image: '', // AnimeFLV doesn't show images for related in this list
+                    type 
+                });
             }
         });
 

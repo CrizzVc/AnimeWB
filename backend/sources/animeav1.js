@@ -55,7 +55,7 @@ const animeav1 = {
         const cover = $('img[alt*="Poster"]').attr('src') || $('img[alt*="Poster"]').attr('data-src') || $('img').eq(2).attr('src');
         const backdrop = $('img[alt*="Backdrop"]').attr('src') || $('img[alt*="Backdrop"]').attr('data-src');
 
-        const status = $('.text-subs.bg-main').text().trim() || $('.bg-soft.text-subs').first().text().trim();
+        const status = $('header .flex.flex-wrap.items-center.gap-2.text-sm span:last-child').text().trim();
         const genres = [];
         $('.bg-soft.text-subs').each((i, el) => {
             const text = $(el).text().trim();

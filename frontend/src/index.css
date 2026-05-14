@@ -445,6 +445,15 @@ header {
     line-height: 1.6;
     font-size: 1.05rem;
     color: #f2f2f3;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.synopsis-text.expanded {
+    -webkit-line-clamp: unset;
 }
 
 /* Related Anime */
