@@ -1,7 +1,8 @@
 /* CSS for AnimeWB Electron App - Inspired by webOS TV Cinematic UI */
 
 :root {
-    --primary-color: #00E5FF; /* Cyan glow */
+    --primary-color: #00E5FF;
+    /* Cyan glow */
     --bg-color: #141416;
     --text-color: #ffffff;
     --text-dim: #6a6a70;
@@ -72,7 +73,8 @@ header {
     position: relative;
 }
 
-.nav-link:hover, .nav-link.focused {
+.nav-link:hover,
+.nav-link.focused {
     color: white;
     background: rgba(255, 255, 255, 0.1);
     transform: scale(1.1);
@@ -397,16 +399,16 @@ header {
 }
 
 .synopsis-box {
-    background: white;
+    background: #3b39393d;
     padding: 30px;
     border-radius: 12px;
     margin-top: 30px;
     color: #333;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .synopsis-box h2 {
-    color: #1a1a24;
+    color: #f2f2f3;
     font-size: 1.8rem;
     margin-bottom: 20px;
     border: none;
@@ -554,7 +556,9 @@ header {
     z-index: 1;
 }
 
-.profiles-title, .profiles-container, .bg-change-btn {
+.profiles-title,
+.profiles-container,
+.bg-change-btn {
     position: relative;
     z-index: 2;
 }
@@ -643,7 +647,7 @@ header {
     align-items: center;
     justify-content: center;
     font-size: 1rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     opacity: 0;
     transition: all 0.2s;
     z-index: 10;
@@ -796,7 +800,8 @@ header {
     border: 2px solid transparent;
 }
 
-.extension-card:hover, .extension-card.active {
+.extension-card:hover,
+.extension-card.active {
     background: rgba(255, 255, 255, 0.1);
     transform: translateY(-5px);
 }
@@ -816,7 +821,7 @@ header {
     font-weight: 800;
     color: white;
     margin-bottom: 10px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
 .extension-name {
@@ -867,8 +872,13 @@ header {
 }
 
 @keyframes slideInRight {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }
 
 .side-panel-header {
@@ -931,7 +941,8 @@ header {
     border-color: var(--primary-color);
 }
 
-.avatar-preview, .bg-preview {
+.avatar-preview,
+.bg-preview {
     width: 100%;
     height: 100px;
     background: rgba(255, 255, 255, 0.05);
@@ -968,7 +979,8 @@ header {
     margin-bottom: 5px;
 }
 
-.avatar-preview:hover, .bg-preview:hover {
+.avatar-preview:hover,
+.bg-preview:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: white;
 }
@@ -993,7 +1005,8 @@ header {
     width: 100%;
     overflow-y: auto;
     flex: 1;
-    align-items: start; /* Prevents vertical stretching of cards */
+    align-items: start;
+    /* Prevents vertical stretching of cards */
 }
 
 .search-card {
@@ -1003,7 +1016,8 @@ header {
     cursor: pointer;
     transition: all 0.3s ease;
     border: 3px solid transparent;
-    height: 320px; /* Fixed height for uniformity */
+    height: 320px;
+    /* Fixed height for uniformity */
     display: flex;
     flex-direction: column;
 }
@@ -1016,7 +1030,8 @@ header {
 
 .search-card img {
     width: 100%;
-    height: 240px; /* Adjusted image height */
+    height: 240px;
+    /* Adjusted image height */
     object-fit: cover;
 }
 
