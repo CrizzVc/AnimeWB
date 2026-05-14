@@ -116,7 +116,7 @@ function App() {
     const playVideo = async (server, animeTitle = '') => {
         setStatus('Resolviendo enlace de video...');
         setDetails(prev => ({ ...prev, currentServer: server, animeTitle: animeTitle }));
-        
+
         try {
             const extracted = await api.extractStream(server.code);
             if (extracted && extracted.streamUrl) {
@@ -131,7 +131,7 @@ function App() {
             setPlayerUrl(server.code);
             setPlayerSubtitles([]);
         }
-        
+
         setStatus('');
         setView(STATES.PLAYER);
     };
@@ -369,16 +369,16 @@ function App() {
         const items = [];
         items.push({ type: 'first', label: '<<', disabled: catalogPage === 1 });
         items.push({ type: 'prev', label: '<', disabled: catalogPage === 1 });
-        
+
         const pagesToShow = new Set();
         pagesToShow.add(1);
         pagesToShow.add(TOTAL_CATALOG_PAGES);
         pagesToShow.add(catalogPage);
         pagesToShow.add(catalogPage - 1);
         pagesToShow.add(catalogPage + 1);
-        
+
         const validPages = Array.from(pagesToShow).filter(p => p > 0 && p <= TOTAL_CATALOG_PAGES).sort((a, b) => a - b);
-        
+
         const pageItems = [];
         let last = 0;
         for (const p of validPages) {
@@ -388,7 +388,7 @@ function App() {
             pageItems.push({ type: 'page', label: p });
             last = p;
         }
-        
+
         items.push(...pageItems);
         items.push({ type: 'next', label: '>', disabled: catalogPage === TOTAL_CATALOG_PAGES });
         items.push({ type: 'last', label: '>>', disabled: catalogPage === TOTAL_CATALOG_PAGES });
@@ -549,8 +549,8 @@ function App() {
                                     </div>
                                 </div>
 
-                                <div className="carousel-container mt-40">
-                                    <h2 className="section-title"><span className="title-marker"></span>I Recommend</h2>
+                                <div className="carousel-container mt-10">
+                                    <h2 className="section-title"><span className="title-marker"></span>Favoritos</h2>
                                     <div className="carousel-wrapper">
                                         {favorites.length > 0 ? (
                                             <div className="carousel" style={{ transform: rowIndex === 1 ? `translateX(-${colIndex * 165}px)` : 'none' }}>
@@ -600,8 +600,8 @@ function App() {
                                         if (item.type === 'ellipsis') {
                                             return <span key={idx} className="page-ellipsis">...</span>;
                                         }
-                                        
-                                        let onClick = () => {};
+
+                                        let onClick = () => { };
                                         if (!item.disabled) {
                                             if (item.type === 'page') onClick = () => loadCatalog(item.label);
                                             else if (item.type === 'first') onClick = () => loadCatalog(1);
@@ -611,7 +611,7 @@ function App() {
                                         }
 
                                         const className = `page-btn ${item.type === 'page' && item.label === catalogPage ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`;
-                                        
+
                                         return (
                                             <button key={idx} className={className} disabled={item.disabled} onClick={onClick}>
                                                 {item.label}
@@ -731,7 +731,7 @@ function App() {
 
             {view === STATES.PLAYER && (
                 <div id="player-overlay" className="fixed inset-0 z-[100] bg-black">
-                    <VideoPlayer 
+                    <VideoPlayer
                         src={playerUrl}
                         title={`${details?.title} - Servidor: ${details?.currentServer?.title}`}
                         subtitles={playerSubtitles}
