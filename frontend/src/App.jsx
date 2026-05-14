@@ -693,7 +693,10 @@ function App() {
                                     {details.related.map((rel, idx) => (
                                         <div key={idx} className="related-card" onClick={() => openDetails(rel)}>
                                             <img src={rel.image} alt={rel.title} />
-                                            <div className="related-card-title">{rel.title}</div>
+                                            <div className="related-info">
+                                                <div className="related-card-title">{rel.title}</div>
+                                                <div className="related-type">{rel.type || 'Relacionado'}</div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

@@ -69,8 +69,16 @@ const animeav1 = {
             const title = $(el).find('h3').first().text().trim();
             const url = $(el).find('a').attr('href');
             const image = $(el).find('img').attr('src');
+            // Try to find relation text like (Precuela)
+            const relation = $(el).find('span, div').filter((i, e) => $(e).text().includes('(')).first().text().trim();
+            
             if (url) {
-                related.push({ title, url: BASE_URL + url, image });
+                related.push({ 
+                    title: title || $(el).text().split('(')[0].trim(), 
+                    url: BASE_URL + url, 
+                    image,
+                    type: relation || 'Relacionado'
+                });
             }
         });
 
