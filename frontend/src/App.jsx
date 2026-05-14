@@ -634,7 +634,12 @@ function App() {
                         <h2>Seleccionar Servidor</h2>
                         <div className="server-grid">
                             {servers.map((s, idx) => (
-                                <button key={idx} className="modal-btn" onClick={() => playVideo(s, details?.title)}>{s.title}</button>
+                                <button key={idx} className="modal-btn flex items-center justify-center gap-2" onClick={() => playVideo(s, details?.title)}>
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                    {s.title}
+                                </button>
                             ))}
                         </div>
                         <button className="modal-btn" onClick={() => setView(details ? STATES.DETAILS : STATES.HOME)}>Atrás</button>

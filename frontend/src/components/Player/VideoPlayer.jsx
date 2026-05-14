@@ -193,17 +193,19 @@ const VideoPlayer = ({ src, title, subtitles: externalSubtitles = [], nextEpisod
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isFullscreen]);
 
+    const isDirectVideo = src && (src.includes('.m3u8') || src.includes('.mp4'));
+
     // Mouse movement to show/hide controls
     const showControls = useCallback(() => {
         setIsControlsVisible(true);
         if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
         
-        if (isPlaying) {
+        if (isPlaying || !isDirectVideo) {
             hideTimeoutRef.current = setTimeout(() => {
                 setIsControlsVisible(false);
             }, 3000);
         }
-    }, [isPlaying]);
+    }, [isPlaying, isDirectVideo]);
 
     // Fullscreen handling
     const toggleFullscreen = () => {
@@ -245,8 +247,6 @@ const VideoPlayer = ({ src, title, subtitles: externalSubtitles = [], nextEpisod
             hlsRef.current.currentLevel = index;
         }
     };
-
-    const isDirectVideo = src && (src.includes('.m3u8') || src.includes('.mp4'));
 
     return (
         <div 
