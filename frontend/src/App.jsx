@@ -16,6 +16,7 @@ const STATES = {
 
 const EXTENSIONS = [
     { id: 'animeflv', name: 'AnimeFLV', icon: 'AF', color: '#ff8a00' },
+    { id: 'animeav1', name: 'AnimeAV1', icon: 'A1', color: '#6366f1' },
     { id: 'monoschinos', name: 'MonoChinos', icon: 'MC', color: '#00e5ff' },
     { id: 'tioanime', name: 'TioAnime', icon: 'TA', color: '#ff00e5' }
 ];
@@ -73,10 +74,10 @@ function App() {
         }
     }, [activeProfile, currentSource]);
 
-    const loadLatest = async () => {
+    const loadLatest = async (source = currentSource) => {
         setStatus('Cargando últimos episodios...');
         try {
-            const data = await api.fetchLatest();
+            const data = await api.fetchLatest(source);
             setLatest(data);
             setStatus('');
         } catch (e) {
@@ -92,7 +93,7 @@ function App() {
     const openDetails = async (anime) => {
         setStatus('Cargando detalles...');
         try {
-            const data = await api.fetchDetails(anime.url);
+            const data = await api.fetchDetails(anime.url, currentSource);
             setDetails(data);
             setView(STATES.DETAILS);
             setStatus('');
@@ -104,7 +105,7 @@ function App() {
     const openServers = async (url) => {
         setStatus('Buscando servidores...');
         try {
-            const data = await api.fetchServers(url);
+            const data = await api.fetchServers(url, currentSource);
             setServers(data);
             setView(STATES.SERVER_MODAL);
             setStatus('');
@@ -247,7 +248,7 @@ function App() {
     const handleSearch = async (e) => {
         if (e.key === 'Enter') {
             setStatus('Buscando...');
-            const results = await api.searchAnime(searchQuery);
+            const results = await api.searchAnime(searchQuery, currentSource);
             setSearchResults(results);
             setSearchIndex(-1); // reset focus to input
             setStatus('');
@@ -257,14 +258,14 @@ function App() {
     const selectSource = (sourceId) => {
         setCurrentSource(sourceId);
         setView(STATES.HOME);
-        loadLatest(); // Reload content for the new source
+        loadLatest(sourceId); // Reload content for the new source immediately
     };
 
     const loadCatalog = async (page = 1) => {
         setStatus('Cargando catálogo...');
         setView(STATES.CATALOG);
         try {
-            const data = await api.fetchCatalog(page);
+            const data = await api.fetchCatalog(page, currentSource);
             setCatalogResults(data);
             setCatalogPage(page);
             setSearchIndex(0);
