@@ -554,12 +554,12 @@ function App() {
                         {view === STATES.HOME && (
                             <>
                                 <div className="carousel-container">
-                                    <div 
-                                        className="carousel-wrapper" 
+                                    <div
+                                        className="carousel-wrapper"
                                         onTouchStart={(e) => handleTouchStart(e, 0)}
                                         onTouchEnd={(e) => handleTouchEnd(e, latest.length)}
                                     >
-                                        <div className="carousel" style={{ transform: `translateX(-${colIndices[0] * 215}px)` }}>
+                                        <div className="carousel" style={{ transform: `translateX(-${colIndices[0] * 335}px)` }}>
                                             {latest.map((anime, idx) => (
                                                 <div
                                                     key={idx}
@@ -571,8 +571,7 @@ function App() {
                                                     <div className="card-info">
                                                         <div className="card-title">{anime.title}</div>
                                                         <div className="card-rating">
-                                                            <span className="score">8.{Math.floor(Math.random() * 9)}</span>
-                                                            <span className="stars">★★★★☆</span>
+                                                            <span className="score"> {anime.episode || anime.number || '#'}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -593,8 +592,8 @@ function App() {
 
                                 <div className="carousel-container mt-10">
                                     <h2 className="section-title"><span className="title-marker"></span>Favoritos</h2>
-                                    <div 
-                                        className="carousel-wrapper" 
+                                    <div
+                                        className="carousel-wrapper"
                                         onTouchStart={(e) => handleTouchStart(e, 1)}
                                         onTouchEnd={(e) => handleTouchEnd(e, Math.max(0, favorites.length - 1))}
                                     >
