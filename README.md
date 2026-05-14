@@ -1,7 +1,5 @@
 # AnimeWB 🎬
 
-![AnimeWB Banner](file:///C:/Users/User/.gemini/antigravity/brain/48739b48-af80-44c2-978f-d6dbaf40862a/animewb_banner_1778739741437.png)
-
 **AnimeWB** is a premium, cinematic desktop application designed for an ad-free and immersive anime streaming experience. Built with **Electron**, **React**, and **TailwindCSS**, it offers a Netflix-style interface with a focus on speed, aesthetics, and user experience.
 
 ---
