@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as api from './api';
 import './index.css';
+import VideoPlayer from './components/Player/VideoPlayer';
 
 const STATES = {
     PROFILES: 'PROFILES',
@@ -111,12 +112,9 @@ function App() {
         }
     };
 
-    const playVideo = (server) => {
-        let url = server.code;
-        if (!url.includes('autoplay=')) {
-            url += (url.includes('?') ? '&' : '?') + 'autoplay=1';
-        }
-        setPlayerUrl(url);
+    const playVideo = (server, animeTitle = '') => {
+        setPlayerUrl(server.code);
+        setDetails(prev => ({ ...prev, currentServer: server, animeTitle: animeTitle }));
         setView(STATES.PLAYER);
     };
 
@@ -618,7 +616,7 @@ function App() {
                         <h2>Seleccionar Servidor</h2>
                         <div className="server-grid">
                             {servers.map((s, idx) => (
-                                <button key={idx} className="modal-btn" onClick={() => playVideo(s)}>{s.title}</button>
+                                <button key={idx} className="modal-btn" onClick={() => playVideo(s, details?.title)}>{s.title}</button>
                             ))}
                         </div>
                         <button className="modal-btn" onClick={() => setView(details ? STATES.DETAILS : STATES.HOME)}>Atrás</button>
@@ -709,18 +707,16 @@ function App() {
             )}
 
             {view === STATES.PLAYER && (
-                <div id="player-overlay">
-                    <iframe
-                        id="video-frame"
+                <div id="player-overlay" className="fixed inset-0 z-[100] bg-black">
+                    <VideoPlayer 
                         src={playerUrl}
-                        allowFullScreen
-                        allow="autoplay; fullscreen"
-                    ></iframe>
-                    <button className="player-back-btn" onClick={() => setView(STATES.SERVER_MODAL)} title="Volver (Esc)">
-                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-                        </svg>
-                    </button>
+                        title={`${details?.title} - Servidor: ${details?.currentServer?.title}`}
+                        onBack={() => setView(STATES.SERVER_MODAL)}
+                        onEnded={() => {
+                            console.log("Video ended");
+                            // Logic for next episode could go here
+                        }}
+                    />
                 </div>
             )}
         </div>

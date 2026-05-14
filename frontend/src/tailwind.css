@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-anime-primary: #ff8a00;
+  --color-anime-secondary: #00e5ff;
+  --color-anime-dark: #0a0a0a;
+  --color-anime-surface: #1a1a1a;
+  
+  --animate-fade-in: fadeIn 0.3s ease-out;
+  --animate-fade-out: fadeOut 0.3s ease-out;
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
