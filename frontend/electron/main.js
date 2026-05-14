@@ -1,5 +1,7 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const sources = require('./services/sources');
+const { animeProvider } = require('./services/providers/animeProvider');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -9,7 +11,6 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
     },
-    // Make it feel like a TV app if possible, or just a standard window
     autoHideMenuBar: true,
   });
 
@@ -19,12 +20,41 @@ function createWindow() {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
-  // Bloquear absolutamente todas las ventanas emergentes (popups) de los iframes
   win.webContents.setWindowOpenHandler((details) => {
     console.log(`Bloqueado popup hacia: ${details.url}`);
     return { action: 'deny' };
   });
 }
+
+// IPC Handlers
+ipcMain.handle('api-latest', async (event, { sourceId }) => {
+  const source = sources.getSource(sourceId);
+  return await source.getLatest();
+});
+
+ipcMain.handle('api-details', async (event, { url, sourceId }) => {
+  const source = sources.getSource(sourceId);
+  return await source.getDetails(url);
+});
+
+ipcMain.handle('api-servers', async (event, { url, sourceId }) => {
+  const source = sources.getSource(sourceId);
+  return await source.getServers(url);
+});
+
+ipcMain.handle('api-search', async (event, { query, sourceId }) => {
+  const source = sources.getSource(sourceId);
+  return await source.search(query);
+});
+
+ipcMain.handle('api-browse', async (event, { page, sourceId }) => {
+  const source = sources.getSource(sourceId);
+  return await source.browse(page);
+});
+
+ipcMain.handle('api-extract', async (event, { url }) => {
+  return await animeProvider.extract(url);
+});
 
 app.whenReady().then(() => {
   createWindow();
