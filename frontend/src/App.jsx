@@ -659,9 +659,9 @@ function App() {
                             <button
                                 className={`modal-btn ${favorites.some(f => f.url === selectedAnime?.url) ? 'active' : ''}`}
                                 onClick={() => toggleFavorite(selectedAnime || details)}
-                                style={{ marginTop: 0, width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}
+                                style={{ marginTop: 0, width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', borderRadius: '50%' }}
                             >
-                                {favorites.some(f => f.url === selectedAnime?.url) ? '❤️' : '🤍'}
+                                {favorites.some(f => f.url === selectedAnime?.url) ? '❤' : '♡'}
                             </button>
 
                             {details.status && (
@@ -674,7 +674,7 @@ function App() {
                     </div>
                     <div className="details-right">
                         <h1 style={{ fontSize: '3rem', marginBottom: '10px' }}>{details.title}</h1>
-                        
+
                         <div className="synopsis-box">
                             <h2>Sinopsis</h2>
                             {details.genres && details.genres.length > 0 && (
@@ -688,7 +688,7 @@ function App() {
                                 {details.synopsis}
                             </p>
                             {details.synopsis && details.synopsis.length > 200 && (
-                                <button 
+                                <button
                                     className="text-primary mt-2 font-bold hover:underline"
                                     onClick={() => setExpandedSynopsis(!expandedSynopsis)}
                                 >
@@ -703,7 +703,11 @@ function App() {
                                 <div className="related-row">
                                     {details.related.map((rel, idx) => (
                                         <div key={idx} className="related-card" onClick={() => openDetails(rel)}>
-                                            <img src={rel.image} alt={rel.title} />
+                                            {rel.image ? (
+                                                <img src={rel.image} alt="" />
+                                            ) : (
+                                                <div className="related-placeholder">▶</div>
+                                            )}
                                             <div className="related-info">
                                                 <div className="related-card-title">{rel.title}</div>
                                                 <div className="related-type">{rel.type || 'Relacionado'}</div>
