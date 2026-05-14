@@ -57,6 +57,37 @@ function App() {
     const [colIndex, setColIndex] = useState(0);
     const [searchIndex, setSearchIndex] = useState(-1); // -1: input focused
 
+    const latestCarouselRef = useRef(null);
+    const favoritesCarouselRef = useRef(null);
+
+    // Sync scroll position with colIndex/rowIndex
+    useEffect(() => {
+        const syncScroll = (ref, index, itemWidth) => {
+            if (ref.current) {
+                ref.current.scrollTo({
+                    left: index * itemWidth,
+                    behavior: 'smooth'
+                });
+            }
+        };
+
+        if (rowIndex === 0) syncScroll(latestCarouselRef, colIndex, 215);
+        if (rowIndex === 1) syncScroll(favoritesCarouselRef, colIndex, 265);
+    }, [colIndex, rowIndex]);
+
+    // Handle manual scroll (touch) to update focus
+    const handleScroll = (e, targetRow) => {
+        if (rowIndex !== targetRow) return; // Only update if it's the active row
+
+        const scrollLeft = e.target.scrollLeft;
+        const itemWidth = targetRow === 0 ? 215 : 265;
+        const newIndex = Math.round(scrollLeft / itemWidth);
+
+        if (newIndex !== colIndex) {
+            setColIndex(newIndex);
+        }
+    };
+
     useEffect(() => {
         const timer = setInterval(() => {
             setClock(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
@@ -532,8 +563,8 @@ function App() {
                         {view === STATES.HOME && (
                             <>
                                 <div className="carousel-container">
-                                    <div className="carousel-wrapper">
-                                        <div className="carousel" style={{ transform: rowIndex === 0 ? `translateX(-${colIndex * 215}px)` : 'none' }}>
+                                    <div className="carousel-wrapper" ref={latestCarouselRef} onScroll={(e) => handleScroll(e, 0)}>
+                                        <div className="carousel">
                                             {latest.map((anime, idx) => (
                                                 <div
                                                     key={idx}
@@ -567,9 +598,9 @@ function App() {
 
                                 <div className="carousel-container mt-10">
                                     <h2 className="section-title"><span className="title-marker"></span>Favoritos</h2>
-                                    <div className="carousel-wrapper">
+                                    <div className="carousel-wrapper" ref={favoritesCarouselRef} onScroll={(e) => handleScroll(e, 1)}>
                                         {favorites.length > 0 ? (
-                                            <div className="carousel" style={{ transform: rowIndex === 1 ? `translateX(-${colIndex * 165}px)` : 'none' }}>
+                                            <div className="carousel">
                                                 {favorites.map((anime, idx) => (
                                                     <div
                                                         key={idx}
@@ -703,7 +734,7 @@ function App() {
                             </p>
                             {details.synopsis && details.synopsis.length > 200 && (
                                 <button
-                                    className="text-primary mt-2 font-bold hover:underline"
+                                    className="text-white mt-2 font-bold hover:underline"
                                     onClick={() => setExpandedSynopsis(!expandedSynopsis)}
                                 >
                                     {expandedSynopsis ? 'Leer menos' : 'Leer más...'}

@@ -7,6 +7,7 @@ const VideoPlayer = ({ src, title, subtitles: externalSubtitles = [], nextEpisod
     const hlsRef = useRef(null);
     const containerRef = useRef(null);
     const hideTimeoutRef = useRef(null);
+    const isTouchDevice = useRef('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
     // State
     const [isPlaying, setIsPlaying] = useState(false);
@@ -195,17 +196,44 @@ const VideoPlayer = ({ src, title, subtitles: externalSubtitles = [], nextEpisod
 
     const isDirectVideo = src && (src.includes('.m3u8') || src.includes('.mp4'));
 
-    // Mouse movement to show/hide controls
+    // Mouse/Touch movement to show/hide controls
     const showControls = useCallback(() => {
         setIsControlsVisible(true);
         if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
         
-        if (isPlaying || !isDirectVideo) {
+        // On touch devices, always auto-hide after 3s (regardless of play state)
+        // On desktop, hide only if playing or if it's an iframe
+        if (isTouchDevice.current || isPlaying || !isDirectVideo) {
             hideTimeoutRef.current = setTimeout(() => {
                 setIsControlsVisible(false);
             }, 3000);
         }
     }, [isPlaying, isDirectVideo]);
+
+    // Toggle controls on touch tap (show if hidden, hide if visible)
+    const handleTouchTap = useCallback(() => {
+        setIsControlsVisible(prev => {
+            if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+            if (!prev) {
+                // Showing controls — start auto-hide timer
+                hideTimeoutRef.current = setTimeout(() => {
+                    setIsControlsVisible(false);
+                }, 3000);
+                return true;
+            } else {
+                // Already visible — hide immediately
+                return false;
+            }
+        });
+    }, []);
+
+    // Auto-hide controls on initial load
+    useEffect(() => {
+        showControls();
+        return () => {
+            if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+        };
+    }, [src, showControls]);
 
     // Fullscreen handling
     const toggleFullscreen = () => {
@@ -252,8 +280,11 @@ const VideoPlayer = ({ src, title, subtitles: externalSubtitles = [], nextEpisod
         <div 
             ref={containerRef}
             className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden group"
-            onMouseMove={showControls}
-            onMouseLeave={() => isPlaying && setIsControlsVisible(false)}
+            onMouseMove={isTouchDevice.current ? undefined : showControls}
+            onMouseEnter={isTouchDevice.current ? undefined : showControls}
+            onClick={isTouchDevice.current ? handleTouchTap : showControls}
+            onTouchStart={isTouchDevice.current ? undefined : showControls}
+            onMouseLeave={() => !isTouchDevice.current && isPlaying && setIsControlsVisible(false)}
         >
             {isDirectVideo ? (
                 <>
