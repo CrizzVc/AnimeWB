@@ -893,6 +893,7 @@ header {
     width: 100%;
     overflow-y: auto;
     flex: 1;
+    align-items: start; /* Prevents vertical stretching of cards */
 }
 
 .search-card {
@@ -902,6 +903,9 @@ header {
     cursor: pointer;
     transition: all 0.3s ease;
     border: 3px solid transparent;
+    height: 320px; /* Fixed height for uniformity */
+    display: flex;
+    flex-direction: column;
 }
 
 .search-card.focused {
@@ -912,7 +916,7 @@ header {
 
 .search-card img {
     width: 100%;
-    height: 250px;
+    height: 240px; /* Adjusted image height */
     object-fit: cover;
 }
 
