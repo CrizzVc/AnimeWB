@@ -46,6 +46,17 @@ const animeflv = {
             genres.push($(el).text().trim());
         });
 
+        const related = [];
+        $('.ListAnimes.Axis li').each((i, el) => {
+            const title = $(el).find('.Title').text().trim();
+            const url = $(el).find('a').attr('href');
+            let image = $(el).find('img').attr('src');
+            if (image && image.startsWith('/')) image = BASE_URL + image;
+            if (url) {
+                related.push({ title, url: BASE_URL + url, image });
+            }
+        });
+
         let episodes = [];
         $('script').each((i, el) => {
             const text = $(el).html();
@@ -65,7 +76,7 @@ const animeflv = {
             }
         });
 
-        return { title, synopsis, cover, episodes };
+        return { title, synopsis, cover, status, genres, related, episodes };
     },
 
     getServers: async (url) => {

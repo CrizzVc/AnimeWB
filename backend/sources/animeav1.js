@@ -64,6 +64,16 @@ const animeav1 = {
             }
         });
 
+        const related = [];
+        $('.gradient-cut').find('.group\\/item').each((i, el) => {
+            const title = $(el).find('h3').first().text().trim();
+            const url = $(el).find('a').attr('href');
+            const image = $(el).find('img').attr('src');
+            if (url) {
+                related.push({ title, url: BASE_URL + url, image });
+            }
+        });
+
         const episodes = [];
         $('a[href*="/media/"]').each((i, el) => {
             const href = $(el).attr('href');
@@ -83,7 +93,7 @@ const animeav1 = {
         // Sort episodes descending
         episodes.sort((a, b) => parseInt(b.episode) - parseInt(a.episode));
 
-        return { title, synopsis, cover, backdrop, status, genres, episodes };
+        return { title, synopsis, cover, backdrop, status, genres, related, episodes };
     },
 
     getServers: async (url) => {

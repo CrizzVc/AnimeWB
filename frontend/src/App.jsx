@@ -654,17 +654,17 @@ function App() {
                     <div className="details-left">
                         <img src={details.cover} className="details-cover" alt="Cover" />
 
-                        <div className="flex flex-col gap-3 mt-4">
+                        <div className="flex items-center gap-3 mt-4">
                             <button
                                 className={`modal-btn ${favorites.some(f => f.url === selectedAnime?.url) ? 'active' : ''}`}
                                 onClick={() => toggleFavorite(selectedAnime || details)}
-                                style={{ marginTop: 0 }}
+                                style={{ marginTop: 0, width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}
                             >
-                                {favorites.some(f => f.url === selectedAnime?.url) ? '❤️ En Favoritos' : '🤍 Añadir a Favoritos'}
+                                {favorites.some(f => f.url === selectedAnime?.url) ? '❤️' : '🤍'}
                             </button>
 
                             {details.status && (
-                                <div className={`status-badge ${details.status.toLowerCase().includes('finalizado') ? 'finalizado' : ''}`}>
+                                <div className={`status-badge ${details.status.toLowerCase().includes('finalizado') ? 'finalizado' : ''}`} style={{ marginTop: 0 }}>
                                     <span className="ic-monitor ic-before"></span>
                                     {details.status}
                                 </div>
@@ -686,7 +686,21 @@ function App() {
                             <p className="synopsis-text">{details.synopsis}</p>
                         </div>
 
-                        <h3 style={{ marginTop: '30px', fontSize: '1.5rem' }}>Episodios</h3>
+                        {details.related && details.related.length > 0 && (
+                            <div className="related-section">
+                                <h3>Relacionados</h3>
+                                <div className="related-row">
+                                    {details.related.map((rel, idx) => (
+                                        <div key={idx} className="related-card" onClick={() => openDetails(rel)}>
+                                            <img src={rel.image} alt={rel.title} />
+                                            <div className="related-card-title">{rel.title}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <h3 style={{ marginTop: '40px', fontSize: '1.5rem' }}>Episodios</h3>
                         <div className="episodes-list">
                             {details.episodes.map((ep, idx) => (
                                 <div key={idx} className="episode-item" onClick={() => openServers(ep.url)}>
