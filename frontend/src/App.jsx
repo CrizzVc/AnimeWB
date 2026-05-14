@@ -302,7 +302,7 @@ function App() {
                     else selectProfile(profiles[colIndex]);
                 }
             } else if (view === STATES.HOME) {
-                if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, (rowIndex === -1 ? 3 : (rowIndex === 0 ? latest.length : favorites.length) - 1)));
+                if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, (rowIndex === -1 ? 3 : (rowIndex === 0 ? latest.length : Math.max(0, favorites.length - 1)))));
                 if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
                 if (e.key === 'ArrowDown') {
                     if (rowIndex === -1) {
@@ -327,7 +327,11 @@ function App() {
                     }
                     else {
                         const list = rowIndex === 0 ? latest : favorites;
-                        if (list[colIndex]) handleAnimeClick(list[colIndex]);
+                        if (rowIndex === 0 && colIndex === latest.length) {
+                            loadCatalog(1);
+                        } else if (list[colIndex]) {
+                            handleAnimeClick(list[colIndex]);
+                        }
                     }
                 }
             } else if (view === STATES.SEARCH || view === STATES.CATALOG) {
@@ -547,6 +551,16 @@ function App() {
                                                     </div>
                                                 </div>
                                             ))}
+                                            <div
+                                                className={`card large-card see-more-card ${rowIndex === 0 && colIndex === latest.length ? 'expanded' : ''}`}
+                                                onClick={() => loadCatalog(1)}
+                                            >
+                                                <div className="card-overlay-gradient"></div>
+                                                <div className="see-more-content">
+                                                    <div className="see-more-icon"><span>+</span></div>
+                                                    <div className="see-more-text">Ver Catálogo</div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

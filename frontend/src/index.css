@@ -171,7 +171,7 @@ header {
 }
 
 .large-card.expanded {
-    flex: 0 0 400px;
+    flex: 0 0 450px;
 }
 
 .small-card {
@@ -196,14 +196,20 @@ header {
     opacity: 1;
 }
 
+.card:hover,
+.card.expanded {
+    transform: scale(1.02);
+    z-index: 10;
+}
+
 .card-info {
     position: relative;
     z-index: 2;
     padding: 20px;
     width: 100%;
-    transform: translateY(20px);
+    transform: translateY(10px);
     opacity: 0;
-    transition: all 0.4s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .large-card.expanded .card-info {
@@ -242,10 +248,47 @@ header {
     font-size: 1rem;
 }
 
-.card:hover,
-.card.focused {
-    transform: scale(1.02);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+.see-more-card {
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+}
+
+.see-more-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    z-index: 2;
+}
+
+.see-more-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    transition: all 0.3s;
+}
+
+.card.expanded .see-more-icon {
+    transform: rotate(90deg) scale(1.1);
+    background: var(--primary-color);
+    color: white;
+}
+
+.see-more-text {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 /* Modals & Overlays */

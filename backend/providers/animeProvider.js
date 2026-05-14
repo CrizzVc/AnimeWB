@@ -2,12 +2,14 @@ const streamwish = require('./streamwish');
 const filemoon = require('./filemoon');
 const yourupload = require('./yourupload');
 const maru = require('./maru');
+const mp4upload = require('./mp4upload');
 
 const providers = [
     streamwish,
     filemoon,
     yourupload,
-    maru
+    maru,
+    mp4upload
 ];
 
 const animeProvider = {
