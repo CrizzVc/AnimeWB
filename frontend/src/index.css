@@ -152,7 +152,7 @@ header {
     gap: 15px;
     margin-left: 5px;
     width: max-content;
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
 }
 
@@ -161,7 +161,7 @@ header {
     background-position: center;
     position: relative;
     cursor: pointer;
-    transition: max-width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: flex-end;
     overflow: hidden;
