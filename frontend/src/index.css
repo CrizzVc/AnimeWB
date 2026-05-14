@@ -142,20 +142,9 @@ header {
 
 .carousel-wrapper {
     width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: visible;
     padding: 10px 0 20px 0;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* IE/Edge */
-    -webkit-overflow-scrolling: touch;
-}
-
-.carousel-wrapper::-webkit-scrollbar {
-    display: none;
-    /* Chrome/Safari/Webkit */
+    touch-action: pan-y;
 }
 
 .carousel {
@@ -163,6 +152,8 @@ header {
     gap: 15px;
     margin-left: 5px;
     width: max-content;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
 }
 
 .card {
@@ -170,7 +161,7 @@ header {
     background-position: center;
     position: relative;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: max-width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     display: flex;
     align-items: flex-end;
     overflow: hidden;
@@ -179,17 +170,20 @@ header {
 }
 
 .large-card {
-    flex: 0 0 200px;
+    max-width: 200px;
+    width: 200px;
     height: 280px;
     border-radius: 16px;
 }
 
 .large-card.expanded {
-    flex: 0 0 450px;
+    max-width: 450px;
+    width: 450px;
+    z-index: 10;
 }
 
 .small-card {
-    flex: 0 0 250px;
+    width: 250px;
     height: 150px;
     border-radius: 12px;
 }
@@ -210,25 +204,21 @@ header {
     opacity: 1;
 }
 
-.card:hover,
-.card.expanded {
-    transform: scale(1.02);
-    z-index: 10;
-}
-
 .card-info {
     position: relative;
     z-index: 2;
     padding: 20px;
     width: 100%;
-    transform: translateY(10px);
+    transform: translateY(12px);
     opacity: 0;
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: opacity 0.25s ease 0.2s, transform 0.3s ease 0.15s;
+    pointer-events: none;
 }
 
 .large-card.expanded .card-info {
     transform: translateY(0);
     opacity: 1;
+    pointer-events: auto;
 }
 
 .card-title {

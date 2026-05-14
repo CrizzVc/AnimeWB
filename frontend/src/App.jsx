@@ -54,38 +54,35 @@ function App() {
 
     // Navigation state for "spatial" focus simulation
     const [rowIndex, setRowIndex] = useState(0); // 0: Latest, 1: Favorites, -1: Header
-    const [colIndex, setColIndex] = useState(0);
+    const [colIndices, setColIndices] = useState({ '-1': 0, 0: 0, 1: 0 });
+    const colIndex = colIndices[rowIndex] || 0;
+
+    const setColIndex = (updater) => {
+        setColIndices(prev => ({
+            ...prev,
+            [rowIndex]: typeof updater === 'function' ? updater(prev[rowIndex]) : updater
+        }));
+    };
+
+    const touchStartX = useRef(null);
     const [searchIndex, setSearchIndex] = useState(-1); // -1: input focused
 
-    const latestCarouselRef = useRef(null);
-    const favoritesCarouselRef = useRef(null);
+    const handleTouchStart = (e, row) => {
+        touchStartX.current = e.touches[0].clientX;
+        if (rowIndex !== row) setRowIndex(row);
+    };
 
-    // Sync scroll position with colIndex/rowIndex
-    useEffect(() => {
-        const syncScroll = (ref, index, itemWidth) => {
-            if (ref.current) {
-                ref.current.scrollTo({
-                    left: index * itemWidth,
-                    behavior: 'smooth'
-                });
-            }
-        };
+    const handleTouchEnd = (e, maxCols) => {
+        if (touchStartX.current === null) return;
+        const touchEndX = e.changedTouches[0].clientX;
+        const deltaX = touchStartX.current - touchEndX;
 
-        if (rowIndex === 0) syncScroll(latestCarouselRef, colIndex, 215);
-        if (rowIndex === 1) syncScroll(favoritesCarouselRef, colIndex, 265);
-    }, [colIndex, rowIndex]);
-
-    // Handle manual scroll (touch) to update focus
-    const handleScroll = (e, targetRow) => {
-        if (rowIndex !== targetRow) return; // Only update if it's the active row
-
-        const scrollLeft = e.target.scrollLeft;
-        const itemWidth = targetRow === 0 ? 215 : 265;
-        const newIndex = Math.round(scrollLeft / itemWidth);
-
-        if (newIndex !== colIndex) {
-            setColIndex(newIndex);
+        if (deltaX > 50) {
+            setColIndex(prev => Math.min(prev + 1, maxCols));
+        } else if (deltaX < -50) {
+            setColIndex(prev => Math.max(prev - 1, 0));
         }
+        touchStartX.current = null;
     };
 
     useEffect(() => {
@@ -336,14 +333,8 @@ function App() {
                 if (e.key === 'ArrowRight') setColIndex(prev => Math.min(prev + 1, (rowIndex === -1 ? 3 : (rowIndex === 0 ? latest.length : Math.max(0, favorites.length - 1)))));
                 if (e.key === 'ArrowLeft') setColIndex(prev => Math.max(prev - 1, 0));
                 if (e.key === 'ArrowDown') {
-                    if (rowIndex === -1) {
-                        setRowIndex(0);
-                        setColIndex(prev => Math.min(prev, latest.length > 0 ? latest.length - 1 : 0));
-                    }
-                    else if (rowIndex === 0) {
-                        setRowIndex(1);
-                        setColIndex(prev => favorites.length > 0 ? Math.min(prev, favorites.length - 1) : 0);
-                    }
+                    if (rowIndex === -1) setRowIndex(0);
+                    else if (rowIndex === 0) setRowIndex(1);
                 }
                 if (e.key === 'ArrowUp') {
                     if (rowIndex === 1) setRowIndex(0);
@@ -563,14 +554,18 @@ function App() {
                         {view === STATES.HOME && (
                             <>
                                 <div className="carousel-container">
-                                    <div className="carousel-wrapper" ref={latestCarouselRef} onScroll={(e) => handleScroll(e, 0)}>
-                                        <div className="carousel">
+                                    <div 
+                                        className="carousel-wrapper" 
+                                        onTouchStart={(e) => handleTouchStart(e, 0)}
+                                        onTouchEnd={(e) => handleTouchEnd(e, latest.length)}
+                                    >
+                                        <div className="carousel" style={{ transform: `translateX(-${colIndices[0] * 215}px)` }}>
                                             {latest.map((anime, idx) => (
                                                 <div
                                                     key={idx}
-                                                    className={`card large-card ${rowIndex === 0 && colIndex === idx ? 'expanded' : ''}`}
+                                                    className={`card large-card ${rowIndex === 0 && colIndices[0] === idx ? 'expanded' : ''}`}
                                                     style={{ backgroundImage: `url(${anime.image})` }}
-                                                    onClick={() => handleAnimeClick(anime)}
+                                                    onClick={() => { setRowIndex(0); setColIndex(idx); handleAnimeClick(anime); }}
                                                 >
                                                     <div className="card-overlay-gradient"></div>
                                                     <div className="card-info">
@@ -583,8 +578,8 @@ function App() {
                                                 </div>
                                             ))}
                                             <div
-                                                className={`card large-card see-more-card ${rowIndex === 0 && colIndex === latest.length ? 'expanded' : ''}`}
-                                                onClick={() => loadCatalog(1)}
+                                                className={`card large-card see-more-card ${rowIndex === 0 && colIndices[0] === latest.length ? 'expanded' : ''}`}
+                                                onClick={() => { setRowIndex(0); setColIndex(latest.length); loadCatalog(1); }}
                                             >
                                                 <div className="card-overlay-gradient"></div>
                                                 <div className="see-more-content">
@@ -598,15 +593,19 @@ function App() {
 
                                 <div className="carousel-container mt-10">
                                     <h2 className="section-title"><span className="title-marker"></span>Favoritos</h2>
-                                    <div className="carousel-wrapper" ref={favoritesCarouselRef} onScroll={(e) => handleScroll(e, 1)}>
+                                    <div 
+                                        className="carousel-wrapper" 
+                                        onTouchStart={(e) => handleTouchStart(e, 1)}
+                                        onTouchEnd={(e) => handleTouchEnd(e, Math.max(0, favorites.length - 1))}
+                                    >
                                         {favorites.length > 0 ? (
-                                            <div className="carousel">
+                                            <div className="carousel" style={{ transform: `translateX(-${colIndices[1] * 265}px)` }}>
                                                 {favorites.map((anime, idx) => (
                                                     <div
                                                         key={idx}
-                                                        className={`card small-card ${rowIndex === 1 && colIndex === idx ? 'focused' : ''}`}
+                                                        className={`card small-card ${rowIndex === 1 && colIndices[1] === idx ? 'focused' : ''}`}
                                                         style={{ backgroundImage: `url(${anime.image})` }}
-                                                        onClick={() => handleAnimeClick(anime)}
+                                                        onClick={() => { setRowIndex(1); setColIndex(idx); handleAnimeClick(anime); }}
                                                     >
                                                         <div className="card-overlay-gradient"></div>
                                                     </div>
