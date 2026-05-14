@@ -18,6 +18,12 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  // Bloquear absolutamente todas las ventanas emergentes (popups) de los iframes
+  win.webContents.setWindowOpenHandler((details) => {
+    console.log(`Bloqueado popup hacia: ${details.url}`);
+    return { action: 'deny' };
+  });
 }
 
 app.whenReady().then(() => {

@@ -44,6 +44,7 @@ function App() {
     const [details, setDetails] = useState(null);
     const [servers, setServers] = useState([]);
     const [playerUrl, setPlayerUrl] = useState('');
+    const [playerSubtitles, setPlayerSubtitles] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [status, setStatus] = useState('');
@@ -112,9 +113,26 @@ function App() {
         }
     };
 
-    const playVideo = (server, animeTitle = '') => {
-        setPlayerUrl(server.code);
+    const playVideo = async (server, animeTitle = '') => {
+        setStatus('Resolviendo enlace de video...');
         setDetails(prev => ({ ...prev, currentServer: server, animeTitle: animeTitle }));
+        
+        try {
+            const extracted = await api.extractStream(server.code);
+            if (extracted && extracted.streamUrl) {
+                setPlayerUrl(extracted.streamUrl);
+                setPlayerSubtitles(extracted.subtitles || []);
+                console.log("Enlace resuelto desde backend:", extracted.streamUrl);
+            } else {
+                throw new Error("Extracción fallida");
+            }
+        } catch (e) {
+            console.log("Usando iframe como fallback para:", server.code);
+            setPlayerUrl(server.code);
+            setPlayerSubtitles([]);
+        }
+        
+        setStatus('');
         setView(STATES.PLAYER);
     };
 
@@ -711,6 +729,7 @@ function App() {
                     <VideoPlayer 
                         src={playerUrl}
                         title={`${details?.title} - Servidor: ${details?.currentServer?.title}`}
+                        subtitles={playerSubtitles}
                         onBack={() => setView(STATES.SERVER_MODAL)}
                         onEnded={() => {
                             console.log("Video ended");

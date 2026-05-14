@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Hls from 'hls.js';
 import VideoControls from './VideoControls';
 
-const VideoPlayer = ({ src, title, nextEpisode, onBack, onEnded }) => {
+const VideoPlayer = ({ src, title, subtitles: externalSubtitles = [], nextEpisode, onBack, onEnded }) => {
     const videoRef = useRef(null);
     const hlsRef = useRef(null);
     const containerRef = useRef(null);
@@ -24,6 +24,16 @@ const VideoPlayer = ({ src, title, nextEpisode, onBack, onEnded }) => {
     const [subtitles, setSubtitles] = useState([]);
     const [currentSubtitle, setCurrentSubtitle] = useState(-1);
     const [isBuffering, setIsBuffering] = useState(true);
+
+    // Sync external subtitles
+    useEffect(() => {
+        setSubtitles(externalSubtitles);
+        if (externalSubtitles.length > 0) {
+            setCurrentSubtitle(0); // Select first subtitle by default if available
+        } else {
+            setCurrentSubtitle(-1);
+        }
+    }, [externalSubtitles]);
 
     // Initialize HLS or native player
     useEffect(() => {
@@ -236,6 +246,8 @@ const VideoPlayer = ({ src, title, nextEpisode, onBack, onEnded }) => {
         }
     };
 
+    const isDirectVideo = src && (src.includes('.m3u8') || src.includes('.mp4'));
+
     return (
         <div 
             ref={containerRef}
@@ -243,46 +255,83 @@ const VideoPlayer = ({ src, title, nextEpisode, onBack, onEnded }) => {
             onMouseMove={showControls}
             onMouseLeave={() => isPlaying && setIsControlsVisible(false)}
         >
-            <video 
-                ref={videoRef}
-                className="w-full h-full object-contain"
-                playsInline
-                onEnded={onEnded}
-            />
+            {isDirectVideo ? (
+                <>
+                    <video 
+                        ref={videoRef}
+                        className="w-full h-full object-contain"
+                        playsInline
+                        onEnded={onEnded}
+                    />
 
-            {/* Buffering Indicator */}
-            {isBuffering && (
-                <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                    <div className="w-16 h-16 border-4 border-anime-primary border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(255,138,0,0.4)]"></div>
-                </div>
+                    {/* Buffering Indicator */}
+                    {isBuffering && (
+                        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                            <div className="w-16 h-16 border-4 border-anime-primary border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(255,138,0,0.4)]"></div>
+                        </div>
+                    )}
+
+                    {/* Controls Layer */}
+                    <VideoControls 
+                        isPlaying={isPlaying}
+                        progress={progress}
+                        duration={duration}
+                        buffered={buffered}
+                        volume={volume}
+                        isMuted={isMuted}
+                        isFullscreen={isFullscreen}
+                        isVisible={isControlsVisible}
+                        title={title}
+                        qualities={qualities}
+                        currentQuality={currentQuality}
+                        subtitles={subtitles}
+                        currentSubtitle={currentSubtitle}
+                        onTogglePlay={togglePlay}
+                        onSeek={seek}
+                        onSkip={skip}
+                        onVolumeChange={handleVolumeChange}
+                        onToggleMute={() => setIsMuted(!isMuted)}
+                        onToggleFullscreen={toggleFullscreen}
+                        onQualityChange={handleQualityChange}
+                        onSubtitleChange={setCurrentSubtitle}
+                        onBack={onBack}
+                        onNextEpisode={nextEpisode}
+                    />
+                </>
+            ) : (
+                <>
+                    <iframe
+                        src={src}
+                        className="w-full h-full border-none"
+                        allowFullScreen
+                        allow="autoplay; fullscreen"
+                    ></iframe>
+                    
+                    {/* Simplified Top Bar for iFrames */}
+                    <div className={`
+                        absolute inset-x-0 top-0 z-40 flex flex-col justify-between transition-opacity duration-500 pointer-events-none
+                        ${isControlsVisible ? 'opacity-100' : 'opacity-0'}
+                    `}>
+                        <div className="h-32 bg-gradient-to-b from-black/80 to-transparent p-6 flex items-start justify-between pointer-events-auto">
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={onBack}
+                                    className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+                                >
+                                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                                        <polyline points="12 19 5 12 12 5"></polyline>
+                                    </svg>
+                                </button>
+                                <div>
+                                    <h1 className="text-white text-xl font-medium drop-shadow-md">{title || 'Reproduciendo...'}</h1>
+                                    <p className="text-white/60 text-sm">Servidor Externo</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
-
-            {/* Controls Layer */}
-            <VideoControls 
-                isPlaying={isPlaying}
-                progress={progress}
-                duration={duration}
-                buffered={buffered}
-                volume={volume}
-                isMuted={isMuted}
-                isFullscreen={isFullscreen}
-                isVisible={isControlsVisible}
-                title={title}
-                qualities={qualities}
-                currentQuality={currentQuality}
-                subtitles={subtitles}
-                currentSubtitle={currentSubtitle}
-                onTogglePlay={togglePlay}
-                onSeek={seek}
-                onSkip={skip}
-                onVolumeChange={handleVolumeChange}
-                onToggleMute={() => setIsMuted(!isMuted)}
-                onToggleFullscreen={toggleFullscreen}
-                onQualityChange={handleQualityChange}
-                onSubtitleChange={setCurrentSubtitle}
-                onBack={onBack}
-                onNextEpisode={nextEpisode}
-            />
         </div>
     );
 };

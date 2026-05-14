@@ -29,3 +29,9 @@ export const fetchCatalog = async (page = 1) => {
     const data = await res.json();
     return data.success ? data.data : [];
 };
+
+export const extractStream = async (url) => {
+    const res = await fetch(`${API_BASE_URL}/api/extract?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+    return data.success ? data : null;
+};

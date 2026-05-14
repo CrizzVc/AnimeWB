@@ -3,6 +3,7 @@ const cors = require('cors');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const path = require('path');
+const { animeProvider } = require('./providers/animeProvider');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -192,6 +193,19 @@ app.get('/api/browse', async (req, res) => {
     } catch (error) {
         console.error("Error in browse:", error.message);
         return res.status(500).json({ error: "Failed to browse anime." });
+    }
+});
+
+app.get('/api/extract', async (req, res) => {
+    const url = req.query.url;
+    if (!url) return res.status(400).json({ error: "Missing 'url' parameter" });
+
+    try {
+        const result = await animeProvider.extract(url);
+        return res.json({ success: true, ...result });
+    } catch (error) {
+        console.error("Extraction error for", url, error.message);
+        return res.status(500).json({ error: "Extraction failed" });
     }
 });
 
